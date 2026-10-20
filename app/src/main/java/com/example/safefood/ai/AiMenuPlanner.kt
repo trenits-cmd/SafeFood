@@ -9,7 +9,7 @@ object AiMenuPlanner {
 
     enum class PlanningGoal(val label: String, val description: String) {
         SAFE_ONLY("Strict Safe Foods (4-5 Stars)", "Focus exclusively on highest rated comfortable safe foods"),
-        TEXTURE_BALANCED("Texture Variety", "Balance crunchy and soft safe foods throughout the day"),
+        BALANCED("Balanced Meals", "Combines proteins, vegetables and wholesome carbs"),
         LOW_PREPARATION("Low Energy / Fast Prep", "Minimal cooking effort with predictable safe items"),
         ROTATION_HELPER("Safe Food Rotation", "Prevent safe food burnout by rotating options")
     }
@@ -26,41 +26,38 @@ object AiMenuPlanner {
         val safePool = if (highlySafe.isNotEmpty()) highlySafe else if (moderatelySafe.isNotEmpty()) moderatelySafe else foods
 
         val breakfastPool = safePool.filter {
-            it.name.contains("Toast", ignoreCase = true) ||
-            it.name.contains("Oatmeal", ignoreCase = true) ||
-            it.name.contains("Applesauce", ignoreCase = true) ||
+            it.name.contains("Milk", ignoreCase = true) ||
             it.name.contains("Yogurt", ignoreCase = true) ||
-            it.name.contains("Pancakes", ignoreCase = true) ||
-            it.name.contains("Cereal", ignoreCase = true) ||
+            it.name.contains("Oats", ignoreCase = true) ||
+            it.name.contains("Oatmeal", ignoreCase = true) ||
+            it.name.contains("Egg", ignoreCase = true) ||
             it.name.contains("Apple", ignoreCase = true) ||
             it.name.contains("Banana", ignoreCase = true) ||
-            it.textureTags.contains("Sweet") ||
-            it.textureTags.contains("Soft")
+            it.name.contains("Berry", ignoreCase = true)
         }.ifEmpty { safePool }
 
         val lunchDinnerPool = safePool.filter {
             it.name.contains("Rice", ignoreCase = true) ||
-            it.name.contains("Nuggets", ignoreCase = true) ||
-            it.name.contains("Noodles", ignoreCase = true) ||
-            it.name.contains("Fries", ignoreCase = true) ||
-            it.name.contains("Macaroni", ignoreCase = true) ||
-            it.name.contains("Cheese", ignoreCase = true) ||
             it.name.contains("Chicken", ignoreCase = true) ||
+            it.name.contains("Salmon", ignoreCase = true) ||
+            it.name.contains("Beef", ignoreCase = true) ||
+            it.name.contains("Turkey", ignoreCase = true) ||
+            it.name.contains("Pork", ignoreCase = true) ||
+            it.name.contains("Pasta", ignoreCase = true) ||
+            it.name.contains("Lentil", ignoreCase = true) ||
             it.name.contains("Potato", ignoreCase = true) ||
-            it.textureTags.contains("Warm") ||
-            it.textureTags.contains("Savory")
+            it.name.contains("Tomato", ignoreCase = true) ||
+            it.name.contains("Broccoli", ignoreCase = true)
         }.ifEmpty { safePool }
 
         val snackPool = safePool.filter {
-            it.name.contains("Crackers", ignoreCase = true) ||
-            it.name.contains("Pretzels", ignoreCase = true) ||
-            it.name.contains("Chips", ignoreCase = true) ||
-            it.name.contains("Pudding", ignoreCase = true) ||
+            it.name.contains("Cheese", ignoreCase = true) ||
+            it.name.contains("Fruit", ignoreCase = true) ||
             it.name.contains("Juice", ignoreCase = true) ||
             it.name.contains("Water", ignoreCase = true) ||
-            it.name.contains("Slices", ignoreCase = true) ||
-            it.textureTags.contains("Crunchy") ||
-            it.textureTags.contains("Dry")
+            it.name.contains("Carrot", ignoreCase = true) ||
+            it.name.contains("Cucumber", ignoreCase = true) ||
+            it.name.contains("Crackers", ignoreCase = true)
         }.ifEmpty { safePool }
 
         val daysList = mutableListOf<MealPlanDay>()
@@ -70,11 +67,11 @@ object AiMenuPlanner {
         for (i in 0 until daysCount) {
             val dayName = dayNames.getOrElse(i) { "Day ${i + 1}" }
 
-            val breakfast = breakfastPool.shuffled().firstOrNull()?.name ?: "Plain Toast & Water"
-            val lunch = lunchDinnerPool.shuffled().firstOrNull()?.name ?: "Chicken Nuggets & Rice"
-            val dinner = lunchDinnerPool.shuffled().firstOrNull()?.name ?: "Butter Noodles"
-            val snack1 = snackPool.shuffled().firstOrNull()?.name ?: "Saltine Crackers"
-            val snack2 = snackPool.shuffled().firstOrNull()?.name ?: "Applesauce"
+            val breakfast = breakfastPool.shuffled().firstOrNull()?.name ?: "Whole Milk & Apple"
+            val lunch = lunchDinnerPool.shuffled().firstOrNull()?.name ?: "Chicken Breast & Brown Rice"
+            val dinner = lunchDinnerPool.shuffled().firstOrNull()?.name ?: "Salmon & Broccoli"
+            val snack1 = snackPool.shuffled().firstOrNull()?.name ?: "Greek Yogurt"
+            val snack2 = snackPool.shuffled().firstOrNull()?.name ?: "Banana"
 
             daysList.add(
                 MealPlanDay(
@@ -102,7 +99,6 @@ object AiMenuPlanner {
 
         for (item in raw) {
             if (item.isBlank()) continue
-            // Split by comma or '&' or 'and'
             val splitItems = item.split(",", "&", " and ")
             for (s in splitItems) {
                 val cleaned = s.trim()

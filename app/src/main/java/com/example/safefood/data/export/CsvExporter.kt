@@ -19,14 +19,14 @@ object CsvExporter {
         val sb = StringBuilder()
         
         // Header
-        sb.append("ID,Food Name,Category,Rating (1-5),Last Rated Date,Notes,Texture Tags\n")
+        sb.append("ID,Food Name,Category,Rating (1-5),Last Rated Date,Notes,Nutrients\n")
 
         for (food in foods) {
             val categoryName = categoryMap[food.categoryId] ?: "Uncategorized"
             val ratingStr = if (food.rating > 0) "${food.rating} Stars" else "Unrated"
             val dateStr = food.lastRatedTimestamp?.let { dateFormat.format(Date(it)) } ?: "Never"
             val notesStr = food.notes
-            val tagsStr = food.textureTags.joinToString("; ")
+            val nutrientsStr = food.nutrientTags.joinToString("; ") { it.displayName }
 
             sb.append(escapeCsv(food.id)).append(",")
             sb.append(escapeCsv(food.name)).append(",")
@@ -34,7 +34,7 @@ object CsvExporter {
             sb.append(escapeCsv(ratingStr)).append(",")
             sb.append(escapeCsv(dateStr)).append(",")
             sb.append(escapeCsv(notesStr)).append(",")
-            sb.append(escapeCsv(tagsStr)).append("\n")
+            sb.append(escapeCsv(nutrientsStr)).append("\n")
         }
 
         return sb.toString()

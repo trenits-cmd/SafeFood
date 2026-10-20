@@ -47,7 +47,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -58,6 +60,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -67,7 +70,6 @@ import com.example.safefood.data.model.FoodCategory
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.data.model.NutrientType
 import com.example.safefood.ui.SafeFoodViewModel
-import com.example.safefood.ui.components.SensoryTagChip
 import com.example.safefood.ui.components.StarRatingBar
 import com.example.safefood.ui.screens.nutrients.NutrientBadgeChip
 import java.text.SimpleDateFormat
@@ -81,11 +83,17 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
     val foods by viewModel.foods.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
+    var selectedSubTabCategoryId by remember { mutableStateOf<String?>(null) } // null = All Food Groups
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var showAddFoodDialog by remember { mutableStateOf(false) }
     var foodToEdit by remember { mutableStateOf<FoodItem?>(null) }
 
     val dateFormat = remember { SimpleDateFormat("MMM d, yyyy 'at' HH:mm", Locale.getDefault()) }
+
+    val filteredCategories = remember(categories, selectedSubTabCategoryId) {
+        if (selectedSubTabCategoryId == null) categories
+        else categories.filter { it.id == selectedSubTabCategoryId }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -97,7 +105,7 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedTextField(
@@ -114,29 +122,54 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                     onClick = { showAddCategoryDialog = true },
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(Icons.Default.Folder, contentDescription = "New Category", modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Folder, contentDescription = "New Group", modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("+ Category")
+                    Text("+ Group")
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (categories.isEmpty()) {
+            // Food Group Sub-Tabs (Sub tab in Categories: All, Dairy, Fruits, Legumes, Meat, Vegetables, Carbohydrates)
+            ScrollableTabRow(
+                selectedTabIndex = if (selectedSubTabCategoryId == null) 0 else categories.indexOfFirst { it.id == selectedSubTabCategoryId } + 1,
+                edgePadding = 0.dp,
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                modifier = Modifier.clip(RoundedCornerShape(12.dp))
+            ) {
+                Tab(
+                    selected = selectedSubTabCategoryId == null,
+                    onClick = { selectedSubTabCategoryId = null },
+                    text = { Text("All Groups (${categories.size})", fontWeight = FontWeight.Bold) }
+                )
+
+                categories.forEach { category ->
+                    val itemCount = foods.count { it.categoryId == category.id }
+                    Tab(
+                        selected = selectedSubTabCategoryId == category.id,
+                        onClick = { selectedSubTabCategoryId = category.id },
+                        text = { Text("${category.name} ($itemCount)", fontWeight = FontWeight.Bold) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            if (filteredCategories.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No categories found. Tap '+' to create one!", style = MaterialTheme.typography.bodyLarge)
+                    Text("No food groups found. Tap '+' to create one!", style = MaterialTheme.typography.bodyLarge)
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(categories, key = { it.id }) { category ->
+                    items(filteredCategories, key = { it.id }) { category ->
                         val categoryFoods = foods.filter { it.categoryId == category.id }
                             .filter { searchQuery.isBlank() || it.name.contains(searchQuery, ignoreCase = true) || it.notes.contains(searchQuery, ignoreCase = true) }
 
@@ -205,7 +238,7 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Delete,
-                                            contentDescription = "Delete Category",
+                                            contentDescription = "Delete Group",
                                             tint = Color.Gray.copy(alpha = 0.7f),
                                             modifier = Modifier.size(20.dp)
                                         )
@@ -237,7 +270,7 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                                     ) {
                                         if (categoryFoods.isEmpty()) {
                                             Text(
-                                                text = "No food items in this category yet.",
+                                                text = "No food items in this group yet.",
                                                 fontSize = 13.sp,
                                                 color = Color.Gray,
                                                 modifier = Modifier.padding(12.dp)
@@ -287,7 +320,7 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
         }
     }
 
-    // Dialog: Add Category
+    // Dialog: Add Category / Food Group
     if (showAddCategoryDialog) {
         AddCategoryDialog(
             onDismiss = { showAddCategoryDialog = false },
@@ -304,8 +337,8 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
             categories = categories,
             initialFood = null,
             onDismiss = { showAddFoodDialog = false },
-            onSave = { categoryId, name, notes, textureTags, nutrientTags, rating ->
-                viewModel.addFoodItem(categoryId, name, notes, textureTags, nutrientTags, rating)
+            onSave = { categoryId, name, notes, nutrientTags, rating ->
+                viewModel.addFoodItem(categoryId, name, notes, nutrientTags, rating)
                 showAddFoodDialog = false
             }
         )
@@ -317,13 +350,12 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
             categories = categories,
             initialFood = food,
             onDismiss = { foodToEdit = null },
-            onSave = { categoryId, name, notes, textureTags, nutrientTags, rating ->
+            onSave = { categoryId, name, notes, nutrientTags, rating ->
                 viewModel.updateFoodItem(
                     food.copy(
                         categoryId = categoryId,
                         name = name,
                         notes = notes,
-                        textureTags = textureTags,
                         nutrientTags = nutrientTags,
                         rating = rating,
                         lastRatedTimestamp = if (rating > 0) System.currentTimeMillis() else food.lastRatedTimestamp
@@ -411,21 +443,6 @@ fun FoodItemCard(
                 }
             }
 
-            // Texture Tags
-            if (food.textureTags.isNotEmpty()) {
-                FlowRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    food.textureTags.forEach { tag ->
-                        SensoryTagChip(tag = tag)
-                    }
-                }
-            }
-
             Spacer(modifier = Modifier.height(4.dp))
 
             // Rating & Timestamp
@@ -465,20 +482,20 @@ fun AddCategoryDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("New Category") },
+        title = { Text("New Food Group") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Category Name (e.g. Fresh Ingredients)") },
+                    label = { Text("Food Group Name (e.g. Dairy, Fruits)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description / Sensory Notes") },
+                    label = { Text("Description") },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -505,15 +522,12 @@ fun AddOrEditFoodDialog(
     categories: List<FoodCategory>,
     initialFood: FoodItem?,
     onDismiss: () -> Unit,
-    onSave: (categoryId: String, name: String, notes: String, textureTags: List<String>, nutrientTags: List<NutrientType>, rating: Int) -> Unit
+    onSave: (categoryId: String, name: String, notes: String, nutrientTags: List<NutrientType>, rating: Int) -> Unit
 ) {
     var name by remember { mutableStateOf(initialFood?.name ?: "") }
     var notes by remember { mutableStateOf(initialFood?.notes ?: "") }
     var rating by remember { mutableStateOf(initialFood?.rating ?: 0) }
     var selectedCategoryId by remember { mutableStateOf(initialFood?.categoryId ?: categories.firstOrNull()?.id ?: "") }
-
-    val availableTextureTags = listOf("Crunchy", "Smooth", "Soft", "Dry", "Bland", "Warm", "Cold", "Salty", "Sweet", "Crispy", "Fresh")
-    var selectedTextureTags by remember { mutableStateOf(initialFood?.textureTags?.toSet() ?: emptySet()) }
 
     var selectedNutrientTags by remember { mutableStateOf(initialFood?.nutrientTags?.toSet() ?: emptySet()) }
 
@@ -521,7 +535,7 @@ fun AddOrEditFoodDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initialFood == null) "Add Food Ingredient" else "Edit Food Ingredient") },
+        title = { Text(if (initialFood == null) "Add Food Item" else "Edit Food Item") },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -532,12 +546,12 @@ fun AddOrEditFoodDialog(
                     expanded = dropdownExpanded,
                     onExpandedChange = { dropdownExpanded = !dropdownExpanded }
                 ) {
-                    val currentCategoryName = categories.find { it.id == selectedCategoryId }?.name ?: "Select Category"
+                    val currentCategoryName = categories.find { it.id == selectedCategoryId }?.name ?: "Select Food Group"
                     OutlinedTextField(
                         value = currentCategoryName,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Category") },
+                        label = { Text("Food Group") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
                         modifier = Modifier
                             .menuAnchor()
@@ -562,7 +576,7 @@ fun AddOrEditFoodDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Ingredient Name (e.g., Salmon, Tomatoes, Brown Rice)") },
+                    label = { Text("Item Name (e.g. Whole Milk, Broccoli)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -570,7 +584,7 @@ fun AddOrEditFoodDialog(
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text("Notes / Cooking Preference") },
+                    label = { Text("Notes / Preparation Preference") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -603,33 +617,12 @@ fun AddOrEditFoodDialog(
                         )
                     }
                 }
-
-                Text("Texture & Sensory Tags:", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    availableTextureTags.forEach { tag ->
-                        val isSelected = selectedTextureTags.contains(tag)
-                        SensoryTagChip(
-                            tag = tag,
-                            isSelected = isSelected,
-                            onClick = {
-                                selectedTextureTags = if (isSelected) {
-                                    selectedTextureTags - tag
-                                } else {
-                                    selectedTextureTags + tag
-                                }
-                            }
-                        )
-                    }
-                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    onSave(selectedCategoryId, name, notes, selectedTextureTags.toList(), selectedNutrientTags.toList(), rating)
+                    onSave(selectedCategoryId, name, notes, selectedNutrientTags.toList(), rating)
                 },
                 enabled = name.isNotBlank() && selectedCategoryId.isNotBlank()
             ) {

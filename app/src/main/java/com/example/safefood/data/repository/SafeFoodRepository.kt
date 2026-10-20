@@ -156,7 +156,6 @@ class SafeFoodRepository(private val context: Context) {
         categoryId: String,
         name: String,
         notes: String = "",
-        textureTags: List<String> = emptyList(),
         nutrientTags: List<NutrientType> = emptyList(),
         initialRating: Int = 0
     ) {
@@ -167,7 +166,6 @@ class SafeFoodRepository(private val context: Context) {
             rating = initialRating,
             lastRatedTimestamp = now,
             notes = notes,
-            textureTags = textureTags,
             nutrientTags = nutrientTags
         )
         val updated = _foods.value + newItem
@@ -237,173 +235,123 @@ class SafeFoodRepository(private val context: Context) {
         }
     }
 
-    // --- Initial Default Data Seed ---
+    // --- Initial Default Data Seed from 500 Food Items CSV ---
     private fun getInitialCategories(): List<FoodCategory> {
         return listOf(
-            FoodCategory(id = "cat_1", name = "Fresh Ingredients", description = "Simple single-ingredient whole foods (Salmon, Tomatoes, Lettuce, etc.)"),
-            FoodCategory(id = "cat_2", name = "Dry & Crunchy", description = "Low predictability risk, crispy, consistent texture"),
-            FoodCategory(id = "cat_3", name = "Warm & Plain", description = "Simple warm comfort staples (Brown Rice, Butter Noodles, etc.)"),
-            FoodCategory(id = "cat_4", name = "Smooth & Soft", description = "No lumps, uniform smooth consistency"),
-            FoodCategory(id = "cat_5", name = "Drinks & Hydration", description = "Safe liquid sensory hydration options")
+            FoodCategory(id = "cat_dairy", name = "Dairy", description = "Milk, Cheeses, Yogurt & Butter"),
+            FoodCategory(id = "cat_fruits", name = "Fruits", description = "Fresh, Dried & Citrus Fruits"),
+            FoodCategory(id = "cat_legumes", name = "Legumes", description = "Beans, Lentils, Peas & Soy Products"),
+            FoodCategory(id = "cat_meat", name = "Meat", description = "Poultry, Beef, Pork, Lamb & Cuts"),
+            FoodCategory(id = "cat_vegetables", name = "Vegetables", description = "Leafy Greens, Root Veggies, Tomatoes & Squash"),
+            FoodCategory(id = "cat_carbs", name = "Carbohydrates", description = "Grains, Rices, Oats & Pastas")
         )
     }
 
     private fun getInitialFoods(categories: List<FoodCategory>): List<FoodItem> {
-        val c1 = categories.getOrNull(0)?.id ?: "cat_1"
-        val c2 = categories.getOrNull(1)?.id ?: "cat_2"
-        val c3 = categories.getOrNull(2)?.id ?: "cat_3"
-        val c4 = categories.getOrNull(3)?.id ?: "cat_4"
-        val c5 = categories.getOrNull(4)?.id ?: "cat_5"
-
+        val categoryMap = categories.associate { it.name.lowercase() to it.id }
         val now = System.currentTimeMillis()
         val dayMillis = 86400000L
 
-        return listOf(
-            // Basic Single Ingredients
-            FoodItem(
-                categoryId = c1,
-                name = "Salmon",
-                rating = 5,
-                lastRatedTimestamp = now - (dayMillis * 1),
-                notes = "Pan-seared or baked, rich in protein & omega-3",
-                textureTags = listOf("Soft", "Warm", "Savory"),
-                nutrientTags = listOf(NutrientType.PROTEIN, NutrientType.HEALTHY_FAT)
-            ),
-            FoodItem(
-                categoryId = c1,
-                name = "Tomatoes",
-                rating = 4,
-                lastRatedTimestamp = now - (dayMillis * 2),
-                notes = "Sliced fresh or cherry tomatoes, rich in vitamin C",
-                textureTags = listOf("Fresh", "Juicy"),
-                nutrientTags = listOf(NutrientType.VITAMINS_MINERALS, NutrientType.FIBER)
-            ),
-            FoodItem(
-                categoryId = c1,
-                name = "Lettuce",
-                rating = 4,
-                lastRatedTimestamp = now - (dayMillis * 3),
-                notes = "Crisp Romaine or iceberg leaves",
-                textureTags = listOf("Crunchy", "Fresh"),
-                nutrientTags = listOf(NutrientType.FIBER, NutrientType.VITAMINS_MINERALS)
-            ),
-            FoodItem(
-                categoryId = c1,
-                name = "Chicken Breast",
-                rating = 5,
-                lastRatedTimestamp = now - (dayMillis * 1),
-                notes = "Plain grilled or boiled, high clean protein",
-                textureTags = listOf("Warm", "Savory"),
-                nutrientTags = listOf(NutrientType.PROTEIN)
-            ),
-            FoodItem(
-                categoryId = c1,
-                name = "Eggs",
-                rating = 5,
-                lastRatedTimestamp = now - (dayMillis * 2),
-                notes = "Scrambled or hard-boiled",
-                textureTags = listOf("Soft", "Warm"),
-                nutrientTags = listOf(NutrientType.PROTEIN, NutrientType.HEALTHY_FAT)
-            ),
+        val rawItems = getCsvFoodRawData()
 
-            // Category 2: Dry & Crunchy
-            FoodItem(
-                categoryId = c2,
-                name = "Saltine Crackers",
-                rating = 5,
-                lastRatedTimestamp = now - (dayMillis * 1),
-                notes = "Always crisp and consistent",
-                textureTags = listOf("Crunchy", "Dry", "Bland"),
-                nutrientTags = listOf(NutrientType.CARBOHYDRATE)
-            ),
-            FoodItem(
-                categoryId = c2,
-                name = "Pretzels",
-                rating = 5,
-                lastRatedTimestamp = now - (dayMillis * 2),
-                notes = "Salty and crunch-safe",
-                textureTags = listOf("Crunchy", "Salty"),
-                nutrientTags = listOf(NutrientType.CARBOHYDRATE)
-            ),
+        return rawItems.mapIndexed { index, (name, categoryName) ->
+            val catId = categoryMap[categoryName.lowercase()] ?: categories.first().id
+            val defaultNutrients = when (categoryName.lowercase()) {
+                "dairy" -> listOf(NutrientType.PROTEIN, NutrientType.HEALTHY_FAT)
+                "fruits" -> listOf(NutrientType.VITAMINS_MINERALS, NutrientType.FIBER)
+                "legumes" -> listOf(NutrientType.PROTEIN, NutrientType.FIBER)
+                "meat" -> listOf(NutrientType.PROTEIN, NutrientType.HEALTHY_FAT)
+                "vegetables" -> listOf(NutrientType.VITAMINS_MINERALS, NutrientType.FIBER)
+                "carbohydrates" -> listOf(NutrientType.CARBOHYDRATE, NutrientType.FIBER)
+                else -> listOf(NutrientType.VITAMINS_MINERALS)
+            }
 
-            // Category 3: Warm & Plain
-            FoodItem(
-                categoryId = c3,
-                name = "Brown Rice",
-                rating = 5,
-                lastRatedTimestamp = now - (dayMillis * 1),
-                notes = "Steamed brown rice, wholesome fiber & complex carbs",
-                textureTags = listOf("Warm", "Soft", "Bland"),
-                nutrientTags = listOf(NutrientType.CARBOHYDRATE, NutrientType.FIBER)
-            ),
-            FoodItem(
-                categoryId = c3,
-                name = "Chicken Nuggets",
-                rating = 5,
-                lastRatedTimestamp = now - (dayMillis * 2),
-                notes = "Crispy coating, familiar safe brand",
-                textureTags = listOf("Warm", "Crispy", "Savory"),
-                nutrientTags = listOf(NutrientType.PROTEIN, NutrientType.CARBOHYDRATE)
-            ),
-            FoodItem(
-                categoryId = c3,
-                name = "Sweet Potato",
-                rating = 4,
-                lastRatedTimestamp = now - (dayMillis * 3),
-                notes = "Baked sweet potato, high fiber and beta-carotene",
-                textureTags = listOf("Warm", "Soft", "Sweet"),
-                nutrientTags = listOf(NutrientType.CARBOHYDRATE, NutrientType.FIBER, NutrientType.VITAMINS_MINERALS)
-            ),
+            // Give a few initial ratings for demo / immediate tab population
+            val rating = when (name.lowercase()) {
+                "salmon", "whole milk", "cheddar cheese", "apple", "chicken breast", "tomato", "white rice", "brown rice", "butter" -> 5
+                "greek yogurt", "banana", "black beans", "beef steak", "broccoli", "rolled oats" -> 4
+                "skim milk", "lemon", "lentils", "pork chop", "spinach", "spaghetti" -> 3
+                else -> 0
+            }
 
-            // Category 4: Smooth & Soft
-            FoodItem(
-                categoryId = c4,
-                name = "Smooth Applesauce",
-                rating = 5,
-                lastRatedTimestamp = now - (dayMillis * 1),
-                notes = "Cinnamon-free, completely smooth",
-                textureTags = listOf("Smooth", "Cold", "Sweet"),
-                nutrientTags = listOf(NutrientType.CARBOHYDRATE, NutrientType.FIBER)
-            ),
-            FoodItem(
-                categoryId = c4,
-                name = "Plain Greek Yogurt",
-                rating = 4,
-                lastRatedTimestamp = now - (dayMillis * 2),
-                notes = "High protein smooth yogurt",
-                textureTags = listOf("Smooth", "Cold"),
-                nutrientTags = listOf(NutrientType.PROTEIN)
-            ),
-            FoodItem(
-                categoryId = c4,
-                name = "Oatmeal",
-                rating = 4,
-                lastRatedTimestamp = now - (dayMillis * 3),
-                notes = "Warm rolled oats with light honey",
-                textureTags = listOf("Warm", "Soft"),
-                nutrientTags = listOf(NutrientType.FIBER, NutrientType.CARBOHYDRATE)
-            ),
+            val ratedTime = if (rating > 0) now - (dayMillis * (index % 10 + 1)) else null
 
-            // Category 5: Drinks & Hydration
             FoodItem(
-                categoryId = c5,
-                name = "Ice Cold Water",
-                rating = 5,
-                lastRatedTimestamp = now - (dayMillis * 1),
-                notes = "Filtered water with ice",
-                textureTags = listOf("Liquid", "Cold", "Refreshing"),
-                nutrientTags = listOf(NutrientType.VITAMINS_MINERALS)
+                categoryId = catId,
+                name = name,
+                rating = rating,
+                lastRatedTimestamp = ratedTime,
+                notes = if (rating >= 4) "Favorite comfort ingredient" else "",
+                nutrientTags = defaultNutrients
             )
-        )
+        }
     }
 
     private fun getInitialShopping(): List<ShoppingItem> {
         return listOf(
-            ShoppingItem(name = "Salmon", category = "Fresh", status = ShoppingItemStatus.NEEDED),
-            ShoppingItem(name = "Brown Rice", category = "Pantry", status = ShoppingItemStatus.ALREADY_HAVE),
-            ShoppingItem(name = "Tomatoes", category = "Produce", status = ShoppingItemStatus.NEEDED),
-            ShoppingItem(name = "Lettuce", category = "Produce", status = ShoppingItemStatus.IN_CART),
-            ShoppingItem(name = "Chicken Breast", category = "Meat", status = ShoppingItemStatus.ALREADY_HAVE)
+            ShoppingItem(name = "Whole Milk", category = "Dairy", status = ShoppingItemStatus.NEEDED),
+            ShoppingItem(name = "Brown Rice", category = "Carbohydrates", status = ShoppingItemStatus.ALREADY_HAVE),
+            ShoppingItem(name = "Tomato", category = "Vegetables", status = ShoppingItemStatus.NEEDED),
+            ShoppingItem(name = "Chicken Breast", category = "Meat", status = ShoppingItemStatus.IN_CART)
+        )
+    }
+
+    private fun getCsvFoodRawData(): List<Pair<String, String>> {
+        return listOf(
+            // Dairy
+            "Whole Milk" to "Dairy", "Skim Milk" to "Dairy", "Cheddar Cheese" to "Dairy", "Mozzarella Cheese" to "Dairy",
+            "Greek Yogurt" to "Dairy", "Butter" to "Dairy", "Heavy Cream" to "Dairy", "Sour Cream" to "Dairy",
+            "Cottage Cheese" to "Dairy", "Parmesan Cheese" to "Dairy", "Swiss Cheese" to "Dairy", "Gouda Cheese" to "Dairy",
+            "Brie Cheese" to "Dairy", "Camembert" to "Dairy", "Provolone Cheese" to "Dairy", "Feta Cheese" to "Dairy",
+            "Ricotta Cheese" to "Dairy", "Paneer" to "Dairy", "Ghee" to "Dairy", "Cream Cheese" to "Dairy",
+            "Kefir" to "Dairy", "Buttermilk" to "Dairy", "Condensed Milk" to "Dairy", "Evaporated Milk" to "Dairy",
+            "Mascarpone" to "Dairy", "Quark" to "Dairy", "Frozen Yogurt" to "Dairy", "Ice Cream" to "Dairy",
+            "Whipped Cream" to "Dairy", "String Cheese" to "Dairy", "Skyr" to "Dairy", "Labneh" to "Dairy",
+
+            // Fruits
+            "Apple" to "Fruits", "Banana" to "Fruits", "Orange" to "Fruits", "Strawberry" to "Fruits",
+            "Blueberry" to "Fruits", "Raspberry" to "Fruits", "Blackberry" to "Fruits", "Pineapple" to "Fruits",
+            "Mango" to "Fruits", "Papaya" to "Fruits", "Peach" to "Fruits", "Nectarine" to "Fruits",
+            "Plum" to "Fruits", "Apricot" to "Fruits", "Cherry" to "Fruits", "Grape" to "Fruits",
+            "Watermelon" to "Fruits", "Cantaloupe" to "Fruits", "Kiwi" to "Fruits", "Lemon" to "Fruits",
+            "Lime" to "Fruits", "Grapefruit" to "Fruits", "Pomegranate" to "Fruits", "Fig" to "Fruits",
+            "Date" to "Fruits", "Cranberry" to "Fruits", "Raisin" to "Fruits", "Dried Apricot" to "Fruits",
+
+            // Legumes
+            "Lentils" to "Legumes", "Red Lentils" to "Legumes", "Green Lentils" to "Legumes", "Chickpeas (Garbanzo Beans)" to "Legumes",
+            "Black Beans" to "Legumes", "Kidney Beans" to "Legumes", "Pinto Beans" to "Legumes", "Navy Beans" to "Legumes",
+            "Lima Beans" to "Legumes", "Soybeans" to "Legumes", "Edamame" to "Legumes", "Peanuts" to "Legumes",
+            "Green Peas" to "Legumes", "Split Peas" to "Legumes", "Black-eyed Peas" to "Legumes", "Fava Beans" to "Legumes",
+            "Tofu" to "Legumes", "Tempeh" to "Legumes", "Peanut Butter" to "Legumes", "Hummus" to "Legumes",
+            "Falafel" to "Legumes", "Lentil Pasta" to "Legumes", "Chickpea Pasta" to "Legumes",
+
+            // Meat
+            "Chicken Breast" to "Meat", "Chicken Thigh" to "Meat", "Chicken Wing" to "Meat", "Chicken Drumstick" to "Meat",
+            "Whole Chicken" to "Meat", "Turkey Breast" to "Meat", "Ground Turkey" to "Meat", "Duck Breast" to "Meat",
+            "Beef Steak" to "Meat", "Ribeye Steak" to "Meat", "Sirloin Steak" to "Meat", "Filet Mignon" to "Meat",
+            "Ground Beef" to "Meat", "Beef Brisket" to "Meat", "Pork Chop" to "Meat", "Pork Loin" to "Meat",
+            "Pork Tenderloin" to "Meat", "Pork Belly" to "Meat", "Bacon" to "Meat", "Ham" to "Meat",
+            "Salami" to "Meat", "Pepperoni" to "Meat", "Pork Sausage" to "Meat", "Lamb Chop" to "Meat",
+            "Ground Lamb" to "Meat", "Beef Jerky" to "Meat", "Turkey Bacon" to "Meat",
+
+            // Vegetables
+            "Broccoli" to "Vegetables", "Cauliflower" to "Vegetables", "Spinach" to "Vegetables", "Kale" to "Vegetables",
+            "Swiss Chard" to "Vegetables", "Arugula" to "Vegetables", "Romaine Lettuce" to "Vegetables", "Iceberg Lettuce" to "Vegetables",
+            "Lettuce" to "Vegetables", "Cabbage" to "Vegetables", "Brussels Sprouts" to "Vegetables", "Asparagus" to "Vegetables",
+            "Celery" to "Vegetables", "Cucumber" to "Vegetables", "Zucchini" to "Vegetables", "Eggplant" to "Vegetables",
+            "Bell Pepper (Red)" to "Vegetables", "Bell Pepper (Green)" to "Vegetables", "Jalapeño Pepper" to "Vegetables",
+            "Tomato" to "Vegetables", "Cherry Tomato" to "Vegetables", "Roma Tomato" to "Vegetables", "Carrot" to "Vegetables",
+            "Radish" to "Vegetables", "Garlic" to "Vegetables", "Onion (Yellow)" to "Vegetables", "Onion (Red)" to "Vegetables",
+            "Sweet Potato" to "Vegetables", "Russet Potato" to "Vegetables", "Red Potato" to "Vegetables", "Yukon Gold Potato" to "Vegetables",
+            "Pumpkin" to "Vegetables", "Butternut Squash" to "Vegetables", "Zucchini" to "Vegetables",
+
+            // Carbohydrates
+            "White Rice" to "Carbohydrates", "Brown Rice" to "Carbohydrates", "Jasmine Rice" to "Carbohydrates", "Basmati Rice" to "Carbohydrates",
+            "Wild Rice" to "Carbohydrates", "Arborio Rice" to "Carbohydrates", "Rolled Oats" to "Carbohydrates", "Steel-Cut Oats" to "Carbohydrates",
+            "Quinoa" to "Carbohydrates", "Couscous" to "Carbohydrates", "Bulgur" to "Carbohydrates", "Farro" to "Carbohydrates",
+            "Barley" to "Carbohydrates", "Buckwheat" to "Carbohydrates", "Gnocchi" to "Carbohydrates", "Spaghetti" to "Carbohydrates",
+            "Penne" to "Carbohydrates", "Fettuccine" to "Carbohydrates", "Rigatoni" to "Carbohydrates", "Macaroni" to "Carbohydrates",
+            "Ramen Noodles" to "Carbohydrates", "Udon Noodles" to "Carbohydrates", "Soba Noodles" to "Carbohydrates"
         )
     }
 }

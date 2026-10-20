@@ -1,4 +1,4 @@
-# 🥑 SafeFood - Sensory & Safe Food Tracker for Autistic Individuals
+# 🥑 SafeFood - Food & Safe Ingredient Tracker for Autistic Individuals
 
 **SafeFood** is a native Android application designed specifically for autistic individuals, sensory-sensitive eaters, and their caregivers or dietitians. It provides an intuitive, low-cognitive-load environment to categorize, rate, track, and plan safe foods, organize ingredients by macronutrients, generate AI meal plans, and streamline grocery shopping.
 
@@ -6,12 +6,13 @@
 
 ## ✨ Key Features
 
-### 📂 Foldable & Expandable Categories
-* Organize basic ingredients (*Salmon, Tomatoes, Brown Rice, Lettuce, etc.*) and prepared meals into sensory categories.
+### 📂 Foldable Categories with Food Group Sub-Tabs
+* Comprehensive library of 500+ ingredients grouped into major food groups: **Dairy**, **Fruits**, **Legumes**, **Meat**, **Vegetables**, and **Carbohydrates**.
+* Interactive **Food Group Sub-Tabs** at the top of the Categories tab (*All, Dairy, Fruits, Legumes, Meat, Vegetables, Carbohydrates*) for instant navigation.
 * Fold (collapse) or unfold (expand) categories with smooth animations to reduce screen clutter and visual overwhelm.
 * Custom categories and ingredients can be added, edited, or removed at any time.
 
-### ⭐ 5-Emoji & 5-Star Rating System from Yummy to Yucky
+### ⭐ 5-Emoji & 5-Star Rating System (Yummy to Yucky)
 * Expressive 5-emoji scale alongside 5-star rating:
   * 😋 **5 Stars**: Yummy! (Safe Favorite)
   * 🙂 **4 Stars**: Good (Safe Option)
@@ -19,7 +20,7 @@
   * 🙁 **2 Stars**: Unsure (Borderline)
   * 🤢 **1 Star**: Yucky (Not Safe / Disliked)
 * Automatically records the exact date and timestamp of the last rating (e.g., *"May 20, 2026 at 14:30"*).
-* Attach custom sensory notes (*e.g., "no skin", "cinnamon-free", "extra crisp"*) and texture tags (*Crunchy, Smooth, Soft, Bland, Warm, Cold, Salty, Sweet, Fresh*).
+* Attach custom notes (*e.g., "no skin", "cinnamon-free", "extra crisp"*).
 
 ### 🛡️ "SafeFood" Highlights Tab
 * Dedicated tab featuring your **Best Rated (4-5★)** safe comfort foods and **Latest Rated** history.
@@ -28,21 +29,21 @@
 
 ### 🥗 Nutrients Tab (Macronutrient Classification)
 * Sort and filter foods by nutritional building blocks:
-  * 🥩 **Proteins**: Growth, muscle repair & satiety (*Salmon, Chicken Breast, Eggs, Greek Yogurt*)
-  * 🌾 **Fibers**: Digestive health & gut comfort (*Brown Rice, Lettuce, Tomatoes, Oatmeal*)
-  * 🥔 **Carbohydrates**: Primary energy fuel (*Brown Rice, Sweet Potato, Saltine Crackers*)
-  * 🥑 **Healthy Fats**: Brain health & nutrient absorption (*Salmon, Eggs*)
-  * 🍊 **Vitamins & Minerals**: Micronutrients & immunity (*Tomatoes, Lettuce, Fresh Fruit*)
+  * 🥩 **Proteins**: Growth, muscle repair & satiety (*Salmon, Chicken Breast, Eggs, Greek Yogurt, Cheddar Cheese*)
+  * 🌾 **Fibers**: Digestive health & gut comfort (*Brown Rice, Lettuce, Tomatoes, Oatmeal, Lentils*)
+  * 🥔 **Carbohydrates**: Primary energy fuel (*Brown Rice, Sweet Potato, White Rice, Spaghetti*)
+  * 🥑 **Healthy Fats**: Brain health & nutrient absorption (*Salmon, Eggs, Whole Milk*)
+  * 🍊 **Vitamins & Minerals**: Micronutrients & immunity (*Tomatoes, Lettuce, Fresh Fruits, Vegetables*)
 * Visual macronutrient badges on food cards and educational banners.
 
 ### 🤖 AI Menu Planner
 * Generates personalized 1-day, 3-day, or 7-day safe meal plans using your highest rated comfort foods.
 * Customizable AI planning strategies:
   * *Strict Safe Foods (4-5 Stars)*
-  * *Texture Variety*
+  * *Balanced Meals*
   * *Low Energy / Fast Prep*
   * *Safe Food Rotation*
-* Optional custom prompt instructions (*e.g., "Only dry crisp snacks, no dairy"*).
+* Optional custom prompt instructions (*e.g., "No dairy, focus on chicken breast and rice"*).
 * **1-Click Shopping List Integration**: Tap *"Add Ingredients"* on any planned day to instantly transfer needed items to your grocery list.
 
 ### 🛒 Shopping List with Pantry Tracking ("Already Have")
@@ -53,7 +54,7 @@
 * Single-tap status switcher buttons and quick filter pills (*All, Needed, In Cart, Already Have*).
 
 ### 📄 CSV Data Export
-* Export food lists, ratings, timestamps, texture tags, and shopping lists into standard CSV format.
+* Export food lists, ratings, timestamps, macronutrient tags, and shopping lists into standard CSV format.
 * Includes a live CSV code preview, 1-click **Share CSV** (Android Share Sheet to save as file or send via email/messaging), and **Copy Text** to clipboard.
 
 ---
@@ -86,11 +87,10 @@ com.example.safefood/
 │   └── AiMenuPlanner.kt           # AI meal plan generator & ingredient extraction engine
 ├── ui/
 │   ├── components/
-│   │   ├── StarRatingBar.kt       # Interactive 5-star rating composable
-│   │   └── SensoryTagChip.kt      # Color-coded sensory texture chips
+│   │   └── StarRatingBar.kt       # Interactive 5-star rating composable with emojis
 │   ├── screens/
 │   │   ├── categories/
-│   │   │   └── CategoriesScreen.kt  # Foldable/expandable categories UI
+│   │   │   └── CategoriesScreen.kt  # Food Group sub-tabs & foldable categories UI
 │   │   ├── safefood/
 │   │   │   └── SafeFoodScreen.kt    # Best & latest rated safe foods UI
 │   │   ├── nutrients/

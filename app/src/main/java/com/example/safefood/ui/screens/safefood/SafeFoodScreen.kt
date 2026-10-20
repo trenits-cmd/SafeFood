@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.ui.SafeFoodViewModel
-import com.example.safefood.ui.components.SensoryTagChip
+import com.example.safefood.ui.screens.nutrients.NutrientBadgeChip
 import com.example.safefood.ui.components.StarRatingBar
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -293,14 +293,14 @@ fun SafeFoodHighlightCard(
                 )
             }
 
-            if (food.textureTags.isNotEmpty()) {
+            if (food.nutrientTags.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(6.dp))
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    food.textureTags.forEach { tag ->
-                        SensoryTagChip(tag = tag)
+                    food.nutrientTags.forEach { nutrient ->
+                        NutrientBadgeChip(nutrient = nutrient)
                     }
                 }
             }

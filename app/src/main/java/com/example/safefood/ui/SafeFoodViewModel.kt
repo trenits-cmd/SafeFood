@@ -107,13 +107,12 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
         categoryId: String,
         name: String,
         notes: String = "",
-        textureTags: List<String> = emptyList(),
         nutrientTags: List<NutrientType> = emptyList(),
         initialRating: Int = 0
     ) {
         if (name.isBlank()) return
         viewModelScope.launch {
-            repository.addFoodItem(categoryId, name.trim(), notes.trim(), textureTags, nutrientTags, initialRating)
+            repository.addFoodItem(categoryId, name.trim(), notes.trim(), nutrientTags, initialRating)
             showMessage("Food item '$name' added")
         }
     }

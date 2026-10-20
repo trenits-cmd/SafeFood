@@ -3,6 +3,7 @@ package com.example.safefood
 import com.example.safefood.data.export.CsvExporter
 import com.example.safefood.data.model.FoodCategory
 import com.example.safefood.data.model.FoodItem
+import com.example.safefood.data.model.NutrientType
 import com.example.safefood.data.model.ShoppingItem
 import com.example.safefood.data.model.ShoppingItemStatus
 import org.junit.Assert.assertTrue
@@ -13,27 +14,27 @@ class CsvExporterTest {
     @Test
     fun exportFoodsToCsv_containsHeaderAndFoodDetails() {
         val categories = listOf(
-            FoodCategory(id = "cat_1", name = "Crunchy Snacks")
+            FoodCategory(id = "cat_1", name = "Dairy")
         )
         val foods = listOf(
             FoodItem(
                 id = "item_1",
                 categoryId = "cat_1",
-                name = "Saltine Crackers",
+                name = "Whole Milk",
                 rating = 5,
-                notes = "Crisp and safe",
-                textureTags = listOf("Crunchy", "Dry")
+                notes = "Wholesome and safe",
+                nutrientTags = listOf(NutrientType.PROTEIN)
             )
         )
 
         val csv = CsvExporter.exportFoodsToCsv(foods, categories)
 
         assertTrue(csv.contains("Food Name,Category,Rating"))
-        assertTrue(csv.contains("Saltine Crackers"))
-        assertTrue(csv.contains("Crunchy Snacks"))
+        assertTrue(csv.contains("Whole Milk"))
+        assertTrue(csv.contains("Dairy"))
         assertTrue(csv.contains("5 Stars"))
-        assertTrue(csv.contains("Crisp and safe"))
-        assertTrue(csv.contains("Crunchy; Dry"))
+        assertTrue(csv.contains("Wholesome and safe"))
+        assertTrue(csv.contains("Proteins"))
     }
 
     @Test

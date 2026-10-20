@@ -12,10 +12,10 @@ class AiMenuPlannerTest {
     @Test
     fun generateMealPlan_prioritizesHighRatedSafeFoods() {
         val foods = listOf(
-            FoodItem(categoryId = "c1", name = "Saltine Crackers", rating = 5, textureTags = listOf("Crunchy")),
-            FoodItem(categoryId = "c2", name = "Plain White Rice", rating = 5, textureTags = listOf("Warm")),
-            FoodItem(categoryId = "c3", name = "Chicken Nuggets", rating = 4, textureTags = listOf("Warm")),
-            FoodItem(categoryId = "c4", name = "Unsafe Soup", rating = 1, textureTags = listOf("Lumpy"))
+            FoodItem(categoryId = "c1", name = "Whole Milk", rating = 5),
+            FoodItem(categoryId = "c2", name = "Brown Rice", rating = 5),
+            FoodItem(categoryId = "c3", name = "Chicken Breast", rating = 4),
+            FoodItem(categoryId = "c4", name = "Unsafe Dish", rating = 1)
         )
 
         val plan = AiMenuPlanner.generateMealPlan(
@@ -25,11 +25,10 @@ class AiMenuPlannerTest {
         )
 
         assertEquals(3, plan.days.size)
-        // Ensure none of the unsafe 1-star foods are chosen when 4-5 star foods exist
         for (day in plan.days) {
-            assertTrue(!day.breakfast.contains("Unsafe Soup"))
-            assertTrue(!day.lunch.contains("Unsafe Soup"))
-            assertTrue(!day.dinner.contains("Unsafe Soup"))
+            assertTrue(!day.breakfast.contains("Unsafe Dish"))
+            assertTrue(!day.lunch.contains("Unsafe Dish"))
+            assertTrue(!day.dinner.contains("Unsafe Dish"))
         }
     }
 
@@ -37,20 +36,21 @@ class AiMenuPlannerTest {
     fun extractIngredientsFromDay_splitsIngredientsCorrectly() {
         val day = MealPlanDay(
             dayName = "Monday",
-            breakfast = "Toast & Applesauce",
-            lunch = "Rice, Chicken Nuggets",
-            dinner = "Butter Noodles",
-            snacks = "Pretzels and Water"
+            breakfast = "Whole Milk & Apple",
+            lunch = "Chicken Breast, Brown Rice",
+            dinner = "Salmon & Broccoli",
+            snacks = "Greek Yogurt and Banana"
         )
 
         val ingredients = AiMenuPlanner.extractIngredientsFromDay(day)
 
-        assertTrue(ingredients.contains("Toast"))
-        assertTrue(ingredients.contains("Applesauce"))
-        assertTrue(ingredients.contains("Rice"))
-        assertTrue(ingredients.contains("Chicken Nuggets"))
-        assertTrue(ingredients.contains("Butter Noodles"))
-        assertTrue(ingredients.contains("Pretzels"))
-        assertTrue(ingredients.contains("Water"))
+        assertTrue(ingredients.contains("Whole Milk"))
+        assertTrue(ingredients.contains("Apple"))
+        assertTrue(ingredients.contains("Chicken Breast"))
+        assertTrue(ingredients.contains("Brown Rice"))
+        assertTrue(ingredients.contains("Salmon"))
+        assertTrue(ingredients.contains("Broccoli"))
+        assertTrue(ingredients.contains("Greek Yogurt"))
+        assertTrue(ingredients.contains("Banana"))
     }
 }

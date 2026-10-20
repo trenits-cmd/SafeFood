@@ -20,7 +20,6 @@ data class FoodItem(
     val rating: Int = 0, // 0 = unrated, 1..5 stars
     val lastRatedTimestamp: Long? = null,
     val notes: String = "",
-    val textureTags: List<String> = emptyList(),
     val nutrientTags: List<NutrientType> = emptyList()
 )
 

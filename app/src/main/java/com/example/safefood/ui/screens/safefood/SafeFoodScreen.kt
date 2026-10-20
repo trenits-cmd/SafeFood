@@ -83,7 +83,7 @@ fun SafeFoodScreen(viewModel: SafeFoodViewModel) {
         ) {
             StatBadgeCard(
                 count = fiveStarCount,
-                label = "100% Safe (5★)",
+                label = "😋 Yummy (5★)",
                 icon = Icons.Default.Verified,
                 bgColor = Color(0xFFE8F5E9),
                 contentColor = Color(0xFF2E7D32),
@@ -91,7 +91,7 @@ fun SafeFoodScreen(viewModel: SafeFoodViewModel) {
             )
             StatBadgeCard(
                 count = fourStarCount,
-                label = "Great Options (4★)",
+                label = "🙂 Good (4★)",
                 icon = Icons.Default.Star,
                 bgColor = Color(0xFFFFF8E1),
                 contentColor = Color(0xFFF57F17),

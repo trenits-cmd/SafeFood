@@ -574,11 +574,13 @@ fun AddOrEditFoodDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Text("Rating (1-5 Stars):", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Text("Rating (1-5 Stars from Yucky to Yummy):", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 StarRatingBar(
                     rating = rating,
                     onRatingSelected = { rating = it },
-                    starSize = 28.dp
+                    starSize = 28.dp,
+                    showEmoji = true,
+                    showLabel = true
                 )
 
                 Text("Nutrients Classification:", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)

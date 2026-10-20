@@ -11,8 +11,13 @@
 * Fold (collapse) or unfold (expand) categories with smooth animations to reduce screen clutter and visual overwhelm.
 * Custom categories and ingredients can be added, edited, or removed at any time.
 
-### ⭐ 5-Star Rating System & Date Tracking
-* Interactive 5-star rating system: tap stars to immediately rate or update a food item's comfort level.
+### ⭐ 5-Emoji & 5-Star Rating System from Yummy to Yucky
+* Expressive 5-emoji scale alongside 5-star rating:
+  * 😋 **5 Stars**: Yummy! (Safe Favorite)
+  * 🙂 **4 Stars**: Good (Safe Option)
+  * 😐 **3 Stars**: Okay (Neutral)
+  * 🙁 **2 Stars**: Unsure (Borderline)
+  * 🤢 **1 Star**: Yucky (Not Safe / Disliked)
 * Automatically records the exact date and timestamp of the last rating (e.g., *"May 20, 2026 at 14:30"*).
 * Attach custom sensory notes (*e.g., "no skin", "cinnamon-free", "extra crisp"*) and texture tags (*Crunchy, Smooth, Soft, Bland, Warm, Cold, Salty, Sweet, Fresh*).
 

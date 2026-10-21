@@ -301,12 +301,12 @@ fun MenuPlannerScreen(viewModel: SafeFoodViewModel) {
                     ) {
                         Button(
                             onClick = {
-                                viewModel.clearMealPlans()
                                 viewModel.generateAiMealPlan(
                                     goal = selectedGoal,
                                     customInstructions = customInstructions,
                                     daysCount = selectedDaysCount,
-                                    usePotentialMealsOnly = usePotentialMealsOnly
+                                    usePotentialMealsOnly = usePotentialMealsOnly,
+                                    clearExisting = true
                                 )
                             },
                             modifier = Modifier

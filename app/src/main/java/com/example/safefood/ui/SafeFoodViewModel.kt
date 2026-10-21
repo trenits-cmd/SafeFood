@@ -232,7 +232,8 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
         goal: AiMenuPlanner.PlanningGoal = AiMenuPlanner.PlanningGoal.SAFE_ONLY,
         customInstructions: String = "",
         daysCount: Int = 3,
-        usePotentialMealsOnly: Boolean = false
+        usePotentialMealsOnly: Boolean = false,
+        clearExisting: Boolean = false
     ) {
         viewModelScope.launch {
             _isGeneratingPlan.value = true
@@ -249,6 +250,7 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
                         onlyPreferred = usePotentialMealsOnly
                     )
                 }
+                if (clearExisting) repository.clearMealPlans()
                 repository.saveMealPlan(generated)
                 showMessage("Menu plan created (${generated.days.size} days)")
             } catch (e: Exception) {

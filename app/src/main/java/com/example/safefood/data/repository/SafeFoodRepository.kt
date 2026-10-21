@@ -206,18 +206,35 @@ class SafeFoodRepository(private val context: Context) {
         val blacklistCategoryId = _categories.value.firstOrNull { it.name == "Blacklist" }?.id
         val updated = _foods.value.map { food ->
             if (food.id == foodId) {
-                if (rating == FoodRatings.YUCKY && blacklistCategoryId != null && food.categoryId != blacklistCategoryId) {
-                    food.copy(
-                        categoryId = blacklistCategoryId,
-                        rating = rating,
-                        lastRatedTimestamp = now,
-                        isPotentialMeal = false
-                    )
-                } else {
-                    food.copy(
-                        rating = rating,
-                        lastRatedTimestamp = if (rating > 0) now else food.lastRatedTimestamp
-                    )
+                val isBlacklisted = blacklistCategoryId != null && food.categoryId == blacklistCategoryId
+                when {
+                    rating == FoodRatings.YUCKY && blacklistCategoryId != null && !isBlacklisted -> {
+                        food.copy(
+                            categoryId = blacklistCategoryId,
+                            previousCategoryId = food.categoryId,
+                            rating = rating,
+                            lastRatedTimestamp = now,
+                            isPotentialMeal = false
+                        )
+                    }
+                    rating > FoodRatings.YUCKY && isBlacklisted -> {
+                        val restored = food.previousCategoryId
+                            ?.takeIf { id -> _categories.value.any { it.id == id } }
+                            ?: _categories.value.firstOrNull { it.id != blacklistCategoryId }?.id
+                            ?: food.categoryId
+                        food.copy(
+                            categoryId = restored,
+                            previousCategoryId = null,
+                            rating = rating,
+                            lastRatedTimestamp = now
+                        )
+                    }
+                    else -> {
+                        food.copy(
+                            rating = rating,
+                            lastRatedTimestamp = if (rating > 0) now else food.lastRatedTimestamp
+                        )
+                    }
                 }
             } else food
         }
@@ -254,6 +271,50 @@ class SafeFoodRepository(private val context: Context) {
         val updated = _foods.value.map { if (it.id == coerced.id) coerced else it }
         _foods.value = updated
         withContext(Dispatchers.IO) { saveFoodsToDisk(updated) }
+    }
+
+    /**
+     * Merges imported CSV rows into the local catalog.
+     * Foods are matched by ID first, then by name, so importing the same export twice
+     * updates existing ratings instead of creating duplicates.
+     */
+    suspend fun importFoods(
+        importedFoods: List<FoodItem>,
+        newCategories: List<FoodCategory>
+    ): Int = mutex.withLock {
+        val currentCategories = _categories.value
+        val mergedCategories = currentCategories + newCategories.filter { candidate ->
+            currentCategories.none {
+                it.id == candidate.id || it.name.equals(candidate.name, ignoreCase = true)
+            }
+        }
+        val mergedFoods = _foods.value.toMutableList()
+
+        for (imported in importedFoods) {
+            val index = mergedFoods.indexOfFirst { it.id == imported.id }
+                .takeIf { it >= 0 }
+                ?: mergedFoods.indexOfFirst { it.name.equals(imported.name, ignoreCase = true) }
+
+            if (index >= 0) {
+                val existing = mergedFoods[index]
+                val categoryExists = mergedCategories.any { it.id == imported.categoryId }
+                // Keep our stable ID while applying all imported metadata.
+                mergedFoods[index] = imported.copy(
+                    id = existing.id,
+                    categoryId = if (categoryExists) imported.categoryId else existing.categoryId
+                )
+            } else {
+                mergedFoods.add(imported)
+            }
+        }
+
+        _categories.value = mergedCategories
+        _foods.value = mergedFoods
+        withContext(Dispatchers.IO) {
+            saveCategoriesToDisk(mergedCategories)
+            saveFoodsToDisk(mergedFoods)
+        }
+        importedFoods.size
     }
 
     suspend fun setPotentialMeal(foodId: String, value: Boolean) = mutex.withLock {
@@ -331,6 +392,11 @@ class SafeFoodRepository(private val context: Context) {
         _mealPlans.value = updated
         withContext(Dispatchers.IO) { saveMealPlansToDisk(updated) }
     }
+    
+    suspend fun clearMealPlans() = mutex.withLock {
+        _mealPlans.value = emptyList()
+        withContext(Dispatchers.IO) { saveMealPlansToDisk(emptyList()) }
+    }
 
     suspend fun deleteMealPlan(planId: String) = mutex.withLock {
         val updated = _mealPlans.value.filter { it.id != planId }
@@ -353,7 +419,7 @@ class SafeFoodRepository(private val context: Context) {
     }
 
     companion object {
-        const val CATALOG_VERSION = 6
+        const val CATALOG_VERSION = 7
         private const val CATALOG_ASSET = "food_catalog.csv"
         private const val FIVE_DAYS_MS = 5L * 24 * 60 * 60 * 1000L
     }

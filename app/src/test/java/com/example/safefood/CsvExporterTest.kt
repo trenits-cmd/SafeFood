@@ -29,10 +29,10 @@ class CsvExporterTest {
 
         val csv = CsvExporter.exportFoodsToCsv(foods, categories)
 
-        assertTrue(csv.contains("Food Name,Category,Rating"))
+        assertTrue(csv.contains("Food Name,Category,Category ID,Rating"))
         assertTrue(csv.contains("Whole Milk"))
         assertTrue(csv.contains("Dairy"))
-        assertTrue(csv.contains("5 Stars"))
+        assertTrue(csv.contains(",5,"))
         assertTrue(csv.contains("Wholesome and safe"))
         assertTrue(csv.contains("Proteins"))
     }

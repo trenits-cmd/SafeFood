@@ -53,7 +53,9 @@ data class FoodItem(
     val season: String = "All Year",
     val imageUrl: String = "",
     /** User marked this food as something they would like to turn into a meal. */
-    val isPotentialMeal: Boolean = false
+    val isPotentialMeal: Boolean = false,
+    /** Category to restore when a blacklisted food is rated 2-5 stars again. */
+    val previousCategoryId: String? = null
 )
 
 @Serializable

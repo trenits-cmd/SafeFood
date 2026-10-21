@@ -43,6 +43,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -294,23 +295,37 @@ fun MenuPlannerScreen(viewModel: SafeFoodViewModel) {
                         }
                     }
 
-                    Button(
-                        onClick = {
-                            viewModel.generateAiMealPlan(
-                                goal = selectedGoal,
-                                customInstructions = customInstructions,
-                                daysCount = selectedDaysCount,
-                                usePotentialMealsOnly = usePotentialMealsOnly
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(12.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.Psychology, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Generate AI Safe Menu Plan", fontWeight = FontWeight.Bold)
+                        Button(
+                            onClick = {
+                                viewModel.clearMealPlans()
+                                viewModel.generateAiMealPlan(
+                                    goal = selectedGoal,
+                                    customInstructions = customInstructions,
+                                    daysCount = selectedDaysCount,
+                                    usePotentialMealsOnly = usePotentialMealsOnly
+                                )
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = !isGenerating
+                        ) {
+                            Icon(Icons.Default.Psychology, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Generate Fresh Menu", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                        OutlinedButton(
+                            onClick = { viewModel.clearMealPlans() },
+                            modifier = Modifier.height(50.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Clear All", fontSize = 12.sp)
+                        }
                     }
                 }
             }
@@ -524,15 +539,6 @@ fun MealSlotText(label: String, value: String) {
                 .padding(vertical = 4.dp),
             verticalAlignment = Alignment.Top
         ) {
-            if (dish != null && false) {
-                MealPhoto(
-                    imageUrl = dish.imageUrl,
-                    contentDescription = dish.title,
-                    modifier = Modifier.size(72.dp)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-            }
-
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(

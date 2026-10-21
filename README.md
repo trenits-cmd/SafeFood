@@ -25,7 +25,8 @@
 ### 🛡️ "SafeFood" Highlights Tab
 * Dedicated tab featuring your **Best Rated (4-5★)** safe comfort foods and **Latest Rated** history.
 * Quick stats summary showing count of 100% safe verified foods.
-* Real-time search bar for quick lookup during anxious or overwhelming meal choices. It is token-based, so word order and plurals do not matter ("red onion" finds "Onion (Red)").\n* **Blacklist** category automatically collects foods rated 1 star and excludes them from recommendations.
+* Real-time search bar for quick lookup during anxious or overwhelming meal choices. It is token-based, so word order and plurals do not matter ("red onion" finds "Onion (Red)").
+* **Blacklist tab**: Foods rated 1 star are moved automatically into a red **Blacklist** sub-tab inside Categories, and are hidden from SafeFood, shopping suggestions and menu planning. If you later rate a blacklisted food 2–5 stars, it returns to its previous group.
 
 ### 🥗 Nutrient Filter (in Categories & SafeFood)
 * Filter both the Categories and SafeFood tabs by nutritional building blocks:
@@ -39,7 +40,7 @@
 
 ### 📦 Food Catalog (CSV) & Bild-Resolver
 * **500+ Lebensmittel** werden aus `app/src/main/assets/food_catalog.csv` eingelesen (`Food Catalog,Category` – 542 Einträge) statt fest im Code zu stehen.
-* Beim ersten Start wird der Katalog automatisch in **7 Kategorien** einsortiert und mit Makronutrient-Tags sowie **Saison-Hinweisen** (All Year / Spring / Summer / Autumn / Winter) angereichert.
+* Beim ersten Start wird der Katalog automatisch in **7 Lebensmittelgruppen plus Blacklist** einsortiert und mit Makronutrient-Tags sowie **Saison-Hinweisen** (All Year / Spring / Summer / Autumn / Winter) angereichert.
 * **Stabile IDs** (`food_<slug>`) sorgen dafür, dass Ratings und Notizen auch nach einem Katalog-Update am selben Lebensmittel hängen bleiben.
 * **Eigenes Foto für jedes Lebensmittel**: Alle 542 Katalogeinträge (502 Namen) **plus 102 selbst angelegte Lebensmittel** haben ein konkretes Foto (`FoodImageCatalog`). Die Bilder liegen als komprimierte JPEGs in `app/src/main/assets/food_images/` und werden **offline** ausgeliefert – kein Nachladen, keine fehlenden Kacheln, keine Hotlink-Probleme. Geladen wird per Coil mit Crossfade und ruhigem Platzhalter (`FoodThumbnail`).
 * **Ruhige, neutrale Motive**: Für Fleisch und heikle Zutaten werden zubereitete Gerichte statt roher Ware, Organe oder Verpackungen gezeigt; botanische Feld-/Blattfotos und Produktpackungen wurden ersetzt. Das reduziert sensorische Reize für empfindliche Nutzer:innen.
@@ -57,7 +58,14 @@
   * *Low Energy / Fast Prep*
   * *Safe Food Rotation*
 * Optional custom prompt instructions (*e.g., "No dairy, focus on chicken breast and rice"*).
-* **Cooked dish preview**: each meal slot gets a dish title and a photo of the finished meal (e.g. "Turkey Rice Bowl"), even for plans saved before this feature.\n* **1-Click Shopping List Integration**: Tap *"Add Ingredients"* on any planned day to instantly transfer needed items to your grocery list.
+* **Cooked dish preview**: each meal slot gets a dish title and a large photo of the finished meal (e.g. "Turkey Rice Bowl"), even for plans saved before this feature.
+* **Fresh start**: **Generate Fresh Menu** clears the previously shown plans before creating a new one, and **Clear All** removes every saved plan from the AI Menu tab.
+* **1-Click Shopping List Integration**: Tap *"Add Ingredients"* on any planned day to instantly transfer needed items to your grocery list.
+
+### 📖 Recipes, Portions & Cooking Instructions
+* Tap any meal slot (or its dish photo) to open a full-screen recipe with a large dish photo, prep/cook times, ingredients and numbered cooking steps.
+* Portions can be set from 1 to 12; **all ingredient amounts scale automatically** with the portion count.
+* Instructions are written per dish family (grain bowl, pasta, potato plate, egg toast, oatmeal, pancakes, yogurt bowl, cheese/bean snack, veggie sticks, and more) and mention the actual foods in the meal instead of repeating one generic text.
 
 ### 🍽️ "Potential Meal" Selection
 * Every food card in Categories and SafeFood has a **Potential meal** button.
@@ -71,9 +79,10 @@
   * 🏠 **Already Have**: Ingredients you already have in your home pantry, preventing accidental duplicate purchases!
 * Single-tap status switcher buttons and quick filter pills (*All, Needed, In Cart, Already Have*).
 
-### 📄 CSV Data Export
-* Export food lists, ratings, timestamps, macronutrient tags, and shopping lists into standard CSV format.
+### 📄 Full Data Export & Import (CSV)
+* Export food lists, ratings, timestamps, notes, nutrients, seasons, images, potential-meal flags and blacklist state into standard CSV format.
 * Includes a live CSV code preview, 1-click **Share CSV** (Android Share Sheet to save as file or send via email/messaging), and **Copy Text** to clipboard.
+* **Import CSV** from the same screen. Foods are matched by **ID first, then by name**, so importing the same export twice updates ratings and notes instead of creating duplicates. Missing groups are created automatically, and foods marked as blacklisted in the file land in the Blacklist group.
 
 ---
 

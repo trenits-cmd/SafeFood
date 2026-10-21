@@ -36,6 +36,8 @@ object CsvImporter {
         val seasonIdx = header.indexOfFirst { it.contains("season") }
         val imageIdx = header.indexOfFirst { it.contains("image") }
         val potentialIdx = header.indexOfFirst { it.contains("potential") }
+        val blacklistIdx = header.indexOfFirst { it.contains("blacklist") }
+        val previousCategoryIdx = header.indexOfFirst { it.contains("previous category") }
         val timestampIdx = header.indexOfFirst { it.contains("timestamp") }
         val idIdx = header.indexOfFirst { it == "id" }
         
@@ -50,14 +52,18 @@ object CsvImporter {
                 if (name.isBlank()) continue
                 
                 val categoryName = if (categoryIdx != -1 && categoryIdx < values.size) values[categoryIdx] else "Uncategorized"
-                val categoryId = if (categoryIdIdx != -1 && categoryIdIdx < values.size && values[categoryIdIdx].isNotBlank()) {
-                    values[categoryIdIdx]
-                } else {
-                    val key = categoryName.lowercase()
-                    categoryMap[key]?.id ?: run {
-                        val newCat = FoodCategory(name = categoryName)
-                        categoryMap[key] = newCat
-                        if (existingCategories.none { it.name.lowercase() == key }) {
+                val explicitCategoryId = if (categoryIdIdx != -1 && categoryIdIdx < values.size) values[categoryIdIdx] else ""
+                val categoryKey = categoryName.lowercase()
+                val categoryId = when {
+                    explicitCategoryId.isNotBlank() && existingCategories.any { it.id == explicitCategoryId } -> explicitCategoryId
+                    categoryMap[categoryKey] != null -> categoryMap.getValue(categoryKey).id
+                    else -> run {
+                        val newCat = FoodCategory(
+                            id = explicitCategoryId.ifBlank { UUID.randomUUID().toString() },
+                            name = categoryName
+                        )
+                        categoryMap[categoryKey] = newCat
+                        if (existingCategories.none { it.name.lowercase() == categoryKey }) {
                             newCategories.add(newCat)
                         }
                         newCat.id
@@ -76,6 +82,21 @@ object CsvImporter {
                 val isPotentialMeal = if (potentialIdx != -1 && potentialIdx < values.size) {
                     values[potentialIdx].lowercase() == "true"
                 } else false
+                val isBlacklisted = if (blacklistIdx != -1 && blacklistIdx < values.size) {
+                    values[blacklistIdx].lowercase() == "true"
+                } else categoryName.equals("Blacklist", ignoreCase = true)
+                val finalCategoryId = if (isBlacklisted) {
+                    existingCategories.find { it.name.equals("Blacklist", ignoreCase = true) }?.id
+                        ?: newCategories.find { it.name.equals("Blacklist", ignoreCase = true) }?.id
+                        ?: run {
+                            val blacklist = FoodCategory(id = "cat_blacklist", name = "Blacklist", description = "Foods rated 1 star. Hidden from recommendations.")
+                            newCategories.add(blacklist)
+                            blacklist.id
+                        }
+                } else categoryId
+                val previousCategoryId = if (previousCategoryIdx != -1 && previousCategoryIdx < values.size) {
+                    values[previousCategoryIdx].takeIf { it.isNotBlank() && existingCategories.any { cat -> cat.id == it } }
+                } else null
                 
                 var timestamp: Long? = null
                 if (timestampIdx != -1 && timestampIdx < values.size && values[timestampIdx].isNotBlank()) {
@@ -91,20 +112,20 @@ object CsvImporter {
                     }
                 }
                 
-                val id = if (idIdx != -1 && idIdx < values.size && values[idIdx].isNotBlank()) {
-                    val existingId = values[idIdx]
-                    if (existingFoods.any { it.id == existingId }) {
-                        existingFoods.find { it.name.equals(name, ignoreCase = true) }?.id ?: UUID.randomUUID().toString()
-                    } else {
-                        existingId
+                val id = when {
+                    idIdx != -1 && idIdx < values.size && values[idIdx].isNotBlank() -> {
+                        val importedId = values[idIdx]
+                        if (existingFoods.any { it.id == importedId }) importedId
+                        else existingFoods.find { it.name.equals(name, ignoreCase = true) }?.id
+                            ?: importedId
                     }
-                } else {
-                    existingFoods.find { it.name.equals(name, ignoreCase = true) }?.id ?: UUID.randomUUID().toString()
+                    else -> existingFoods.find { it.name.equals(name, ignoreCase = true) }?.id
+                        ?: UUID.randomUUID().toString()
                 }
                 
                 val food = FoodItem(
                     id = id,
-                    categoryId = categoryId,
+                    categoryId = finalCategoryId,
                     name = name,
                     rating = FoodRatings.coerce(rating),
                     lastRatedTimestamp = if (FoodRatings.coerce(rating) > 0) timestamp ?: System.currentTimeMillis() else timestamp,
@@ -112,7 +133,8 @@ object CsvImporter {
                     nutrientTags = nutrients,
                     season = season,
                     imageUrl = imageUrl,
-                    isPotentialMeal = isPotentialMeal
+                    isPotentialMeal = isPotentialMeal,
+                    previousCategoryId = previousCategoryId
                 )
                 importedFoods.add(food)
             } catch (e: Exception) {

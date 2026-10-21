@@ -17,12 +17,12 @@ object CsvExporter {
         val sb = StringBuilder()
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
-        sb.append("ID,Food Name,Category,Category ID,Rating (0-5),Last Rated Timestamp,Last Rated Date,Notes,Nutrients,Season,Image URL,Is Potential Meal,Is Blacklisted\n")
+        sb.append("ID,Food Name,Category,Category ID,Rating (0-5),Last Rated Timestamp,Last Rated Date,Notes,Nutrients,Season,Image URL,Is Potential Meal,Is Blacklisted,Previous Category ID\n")
 
         for (food in foods) {
             val categoryName = categoryMap[food.categoryId] ?: "Uncategorized"
             val dateStr = food.lastRatedTimestamp?.let { dateFormat.format(Date(it)) } ?: ""
-            val nutrientsStr = food.nutrientTags.joinToString(";") { it.name }
+            val nutrientsStr = food.nutrientTags.joinToString(";") { it.displayName }
             val isBlacklisted = categoryName.equals("Blacklist", ignoreCase = true)
 
             sb.append(escapeCsv(food.id)).append(",")
@@ -37,7 +37,8 @@ object CsvExporter {
             sb.append(escapeCsv(food.season)).append(",")
             sb.append(escapeCsv(food.imageUrl)).append(",")
             sb.append(escapeCsv(if (food.isPotentialMeal) "true" else "false")).append(",")
-            sb.append(escapeCsv(if (isBlacklisted) "true" else "false")).append("\n")
+            sb.append(escapeCsv(if (isBlacklisted) "true" else "false")).append(",")
+            sb.append(escapeCsv(food.previousCategoryId ?: "")).append("\n")
         }
 
         return sb.toString()

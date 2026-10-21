@@ -3,6 +3,8 @@ package com.example.safefood.ui.screens.export
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -32,6 +35,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -53,8 +57,15 @@ fun ExportScreen(viewModel: SafeFoodViewModel) {
     val context = LocalContext.current
     var selectedExportType by remember { mutableIntStateOf(0) } // 0 = Foods, 1 = Shopping List
 
-    val csvText = remember(selectedExportType, viewModel) {
+    val foods by viewModel.foods.collectAsState()
+    val categories by viewModel.categories.collectAsState()
+    val shoppingList by viewModel.shoppingList.collectAsState()
+    val csvText = remember(selectedExportType, foods, categories, shoppingList) {
         if (selectedExportType == 0) viewModel.getFoodsCsvText() else viewModel.getShoppingCsvText()
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) viewModel.importFoodsCsv(uri)
     }
 
     Column(
@@ -115,6 +126,42 @@ fun ExportScreen(viewModel: SafeFoodViewModel) {
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Shopping List")
                     }
+                }
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.UploadFile,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(26.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Import CSV", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
+                Text(
+                    text = "Restore an export or move your list from another device. Foods are matched by ID or name, so importing the same file twice updates ratings instead of creating duplicates. New groups and foods are added automatically.",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                OutlinedButton(
+                    onClick = { importLauncher.launch(arrayOf("*/*")) },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Choose a SafeFood CSV file")
                 }
             }
         }

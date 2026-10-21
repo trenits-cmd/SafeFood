@@ -3,11 +3,13 @@ package com.example.safefood.ui
 import android.app.Application
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.safefood.ai.AiMenuPlanner
 import com.example.safefood.data.export.CsvExporter
+import com.example.safefood.data.export.CsvImporter
 import com.example.safefood.data.model.FoodCategory
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.data.model.FoodRatings
@@ -260,6 +262,10 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
     fun deleteMealPlan(planId: String) {
         runRepo("Meal plan deleted") { repository.deleteMealPlan(planId) }
     }
+    
+    fun clearMealPlans() {
+        runRepo("All meal plans cleared") { repository.clearMealPlans() }
+    }
 
     fun addDayIngredientsToShoppingList(day: MealPlanDay) {
         runRepo {
@@ -271,6 +277,38 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
 
     fun getFoodsCsvText(): String {
         return CsvExporter.exportFoodsToCsv(foods.value, categories.value)
+    }
+
+    fun importFoodsCsv(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val csvContent = withContext(Dispatchers.IO) {
+                    getApplication<Application>().contentResolver.openInputStream(uri)
+                        ?.bufferedReader()
+                        ?.use { it.readText() }
+                        ?: throw IllegalStateException("Could not read the selected file")
+                }
+                val result = CsvImporter.parseFoodsCsv(
+                    csvContent = csvContent,
+                    existingCategories = categories.value,
+                    existingFoods = foods.value
+                )
+                if (result.foodsToImport.isEmpty()) {
+                    showMessage(result.errors.firstOrNull() ?: "No food rows found in this CSV")
+                    return@launch
+                }
+
+                val importedCount = repository.importFoods(
+                    importedFoods = result.foodsToImport,
+                    newCategories = result.newCategories
+                )
+                val newCategoryCount = result.newCategories.size
+                val categoryNote = if (newCategoryCount > 0) " and $newCategoryCount new group${if (newCategoryCount == 1) "" else "s"}" else ""
+                showMessage("Imported $importedCount food${if (importedCount == 1) "" else "s"}$categoryNote")
+            } catch (e: Exception) {
+                showMessage(e.message ?: "Could not import CSV")
+            }
+        }
     }
 
     fun getShoppingCsvText(): String {

@@ -50,13 +50,13 @@ Die vollstaendige, maschinenlesbare Liste liegt in pp/src/main/assets/food_imag
 | beef skirt steak | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Homemade_Grilled_Skirt_Steak_05-24-2021.jpg) |
 | beef steak | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Steak_dinner_at_1640_Restaurant%2C_Quebec_City%2C_Canada.jpg) |
 | beef tail | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Tail_soup.JPG) |
-| beef tongue | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Libby's_Dried_Beef_ad%2C_1905.jpg) |
+| beef tongue | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Rinderzunge_zubereitet.jpg) |
 | beef top round | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Beef_round_top_round_steak%2C_cooked.jpg) |
 | beef tripe | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Tripe_Curry_made_at_home_in_Punjab%2C_Pakistan.jpg) |
 | beet greens | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Beetroot(1).jpg) |
 | beetroot | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Detroitdarkredbeets.png) |
 | bell pepper | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Green-Yellow-Red-Pepper-2009.jpg) |
-| bison burger | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Matsunaga-2017-red-ink-bison-6928_(38181881154).jpg) |
+| bison burger | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Bison_burger_from_BW's.jpg) |
 | bison meat | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Mixed-meat_hamburger_and_roasted_vegetables.jpg) |
 | bitter gourd | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:Momordica_charantia_Blanco2.357.png) |
 | black beans | siehe Quelle | - | [Commons](https://commons.wikimedia.org/wiki/File:2015_1012_Preserved_black_beans_douchi_close-up.jpg) |

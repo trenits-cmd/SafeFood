@@ -94,7 +94,9 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
                 actions = {
                     IconButton(
                         onClick = {
-                            if (currentRoute != Screen.Export.route) {
+                            if (currentRoute == Screen.Export.route) {
+                                navController.popBackStack()
+                            } else {
                                 navController.navigate(Screen.Export.route)
                             }
                         }

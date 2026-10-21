@@ -113,9 +113,13 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
     val visibleFoods = foods.filter(::matchesFilters)
 
     val filteredCategories = if (selectedSubTabCategoryId == null) {
-        categories
+        categories.filter { !it.name.equals("Blacklist", ignoreCase = true) }
     } else {
-        categories.filter { it.id == selectedSubTabCategoryId }
+        if (selectedSubTabCategoryId == "cat_blacklist") {
+            categories.filter { it.name.equals("Blacklist", ignoreCase = true) }
+        } else {
+            categories.filter { it.id == selectedSubTabCategoryId && !it.name.equals("Blacklist", ignoreCase = true) }
+        }
     }.filter { category -> !filtersActive || visibleFoods.any { it.categoryId == category.id } }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -204,7 +208,16 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
 
             // Food Group Sub-Tabs (Sub tab in Categories: All, Dairy, Fruits, Legumes, Meat, Vegetables, Carbohydrates)
             ScrollableTabRow(
-                selectedTabIndex = if (selectedSubTabCategoryId == null) 0 else categories.indexOfFirst { it.id == selectedSubTabCategoryId } + 1,
+                selectedTabIndex = run {
+                    if (selectedSubTabCategoryId == null) 0
+                    else {
+                        val idx = categories.filter { !it.name.equals("Blacklist", ignoreCase = true) }.indexOfFirst { it.id == selectedSubTabCategoryId }
+                        if (idx >= 0) idx + 1 else {
+                            val blacklist = categories.find { it.name.equals("Blacklist", ignoreCase = true) }
+                            if (blacklist?.id == selectedSubTabCategoryId) categories.filter { !it.name.equals("Blacklist", ignoreCase = true) }.size + 1 else 0
+                        }
+                    }
+                },
                 edgePadding = 0.dp,
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
                 modifier = Modifier.clip(RoundedCornerShape(12.dp))
@@ -212,15 +225,24 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                 Tab(
                     selected = selectedSubTabCategoryId == null,
                     onClick = { selectedSubTabCategoryId = null },
-                    text = { Text("All Groups (${categories.size})", fontWeight = FontWeight.Bold) }
+                    text = { Text("All Groups (${categories.count { !it.name.equals("Blacklist", ignoreCase = true) }})", fontWeight = FontWeight.Bold) }
                 )
 
-                categories.forEach { category ->
+                categories.filter { !it.name.equals("Blacklist", ignoreCase = true) }.forEach { category ->
                     val itemCount = visibleFoods.count { it.categoryId == category.id }
                     Tab(
                         selected = selectedSubTabCategoryId == category.id,
                         onClick = { selectedSubTabCategoryId = category.id },
                         text = { Text("${category.name} ($itemCount)", fontWeight = FontWeight.Bold) }
+                    )
+                }
+                
+                categories.find { it.name.equals("Blacklist", ignoreCase = true) }?.let { blacklist ->
+                    val itemCount = foods.count { it.categoryId == blacklist.id }
+                    Tab(
+                        selected = selectedSubTabCategoryId == blacklist.id,
+                        onClick = { selectedSubTabCategoryId = blacklist.id },
+                        text = { Text("${blacklist.name} ($itemCount)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error) }
                     )
                 }
             }
@@ -318,15 +340,21 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                                         )
                                     }
 
-                                    IconButton(
-                                        onClick = { viewModel.deleteCategory(category.id) }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = "Delete Group",
-                                            tint = Color.Gray.copy(alpha = 0.7f),
-                                            modifier = Modifier.size(20.dp)
-                                        )
+                                    if (!category.name.equals("Blacklist", ignoreCase = true) &&
+                                        category.name != "Dairy" && category.name != "Fruits" && 
+                                        category.name != "Legumes" && category.name != "Meat" && 
+                                        category.name != "Vegetables" && category.name != "Carbohydrates" &&
+                                        category.name != "Pantry & Spices") {
+                                        IconButton(
+                                            onClick = { viewModel.deleteCategory(category.id) }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Delete Group",
+                                                tint = Color.Gray.copy(alpha = 0.7f),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
                                     }
 
                                     IconButton(

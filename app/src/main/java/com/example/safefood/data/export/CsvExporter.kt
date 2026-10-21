@@ -15,24 +15,29 @@ object CsvExporter {
     ): String {
         val categoryMap = categories.associate { it.id to it.name }
         val sb = StringBuilder()
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
-        sb.append("ID,Food Name,Category,Rating (1-5),Last Rated Date,Notes,Nutrients\n")
+        sb.append("ID,Food Name,Category,Category ID,Rating (0-5),Last Rated Timestamp,Last Rated Date,Notes,Nutrients,Season,Image URL,Is Potential Meal,Is Blacklisted\n")
 
         for (food in foods) {
             val categoryName = categoryMap[food.categoryId] ?: "Uncategorized"
-            val ratingStr = if (food.rating > 0) "${food.rating} Stars" else "Unrated"
-            val dateStr = food.lastRatedTimestamp?.let { dateFormat.format(Date(it)) } ?: "Never"
-            val notesStr = food.notes
-            val nutrientsStr = food.nutrientTags.joinToString("; ") { it.displayName }
+            val dateStr = food.lastRatedTimestamp?.let { dateFormat.format(Date(it)) } ?: ""
+            val nutrientsStr = food.nutrientTags.joinToString(";") { it.name }
+            val isBlacklisted = categoryName.equals("Blacklist", ignoreCase = true)
 
             sb.append(escapeCsv(food.id)).append(",")
             sb.append(escapeCsv(food.name)).append(",")
             sb.append(escapeCsv(categoryName)).append(",")
-            sb.append(escapeCsv(ratingStr)).append(",")
+            sb.append(escapeCsv(food.categoryId)).append(",")
+            sb.append(escapeCsv(food.rating.toString())).append(",")
+            sb.append(escapeCsv(food.lastRatedTimestamp?.toString() ?: "")).append(",")
             sb.append(escapeCsv(dateStr)).append(",")
-            sb.append(escapeCsv(notesStr)).append(",")
-            sb.append(escapeCsv(nutrientsStr)).append("\n")
+            sb.append(escapeCsv(food.notes)).append(",")
+            sb.append(escapeCsv(nutrientsStr)).append(",")
+            sb.append(escapeCsv(food.season)).append(",")
+            sb.append(escapeCsv(food.imageUrl)).append(",")
+            sb.append(escapeCsv(if (food.isPotentialMeal) "true" else "false")).append(",")
+            sb.append(escapeCsv(if (isBlacklisted) "true" else "false")).append("\n")
         }
 
         return sb.toString()

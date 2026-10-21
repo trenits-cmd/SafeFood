@@ -168,3 +168,6 @@ Distributed under the MIT License. See [`LICENSE`](LICENSE) for more details.
 Die Lebensmittel-Fotos stammen aus Wikimedia Commons bzw. den Wikipedia-Artikeln und stehen
 unter freien Lizenzen (CC BY, CC BY-SA, CC0 oder Public Domain). Die vollständige Liste mit
 Quelle, Autor und Lizenz je Lebensmittel steht in [`CREDITS.md`](CREDITS.md).
+
+## Download APK
+Download the latest debug APK from [GitHub Actions Artifacts](https://github.com/trenits-cmd/SafeFood/actions) or [Releases](https://github.com/trenits-cmd/SafeFood/releases). A GitHub Actions workflow builds `SafeFood-debug.apk` on every push to `main`.

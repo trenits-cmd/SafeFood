@@ -176,8 +176,8 @@ fun MenuPlannerScreen(viewModel: SafeFoodViewModel) {
                     OutlinedTextField(
                         value = customInstructions,
                         onValueChange = { customInstructions = it },
-                        label = { Text("Custom AI Prompt / Texture Rules (Optional)") },
-                        placeholder = { Text("e.g., Only dry snacks, no dairy") },
+                        label = { Text("Custom AI Prompt / Preferences (Optional)") },
+                        placeholder = { Text("e.g., Only light meals, no dairy") },
                         modifier = Modifier.fillMaxWidth()
                     )
 

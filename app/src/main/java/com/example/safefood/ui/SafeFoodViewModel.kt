@@ -35,13 +35,20 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    private val _selectedSeasonFilter = MutableStateFlow("All Seasons")
+    val selectedSeasonFilter: StateFlow<String> = _selectedSeasonFilter.asStateFlow()
+
+    fun setSeasonFilter(season: String) {
+        _selectedSeasonFilter.value = season
+    }
+
     private val _snackbarMessage = MutableStateFlow<String?>(null)
     val snackbarMessage: StateFlow<String?> = _snackbarMessage.asStateFlow()
 
-    // Safe Food Tab filtered state: Best rated (4-5 stars) and recently rated
+    // Safe Food Tab filtered state: Like (3) or Love (4) and recently rated
     val bestRatedFoods: StateFlow<List<FoodItem>> = combine(foods, _searchQuery) { foodList, query ->
         foodList
-            .filter { it.rating >= 4 }
+            .filter { it.rating >= 3 }
             .filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.notes.contains(query, ignoreCase = true) }
             .sortedByDescending { it.rating }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -54,9 +61,18 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
             .take(10)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private val _showStartupRatePrompt = MutableStateFlow(false)
+    val showStartupRatePrompt: StateFlow<Boolean> = _showStartupRatePrompt.asStateFlow()
+
+    private val _activeRandomFood = MutableStateFlow<FoodItem?>(null)
+    val activeRandomFood: StateFlow<FoodItem?> = _activeRandomFood.asStateFlow()
+
     init {
         viewModelScope.launch {
             repository.loadData()
+            if (repository.hasFoodsNeedingRating()) {
+                _showStartupRatePrompt.value = true
+            }
         }
     }
 
@@ -98,8 +114,49 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
     fun rateFood(foodId: String, newRating: Int) {
         viewModelScope.launch {
             repository.rateFood(foodId, newRating)
-            val starsText = if (newRating == 1) "1 Star" else "$newRating Stars"
-            showMessage("Rating updated to $starsText")
+            val prefText = when (newRating) {
+                4 -> "Love ❤️"
+                3 -> "Like 👍"
+                2 -> "Neutral 😐"
+                1 -> "Dislike 👎"
+                else -> "Unrated"
+            }
+            showMessage("Preference updated to $prefText")
+        }
+    }
+
+    fun dismissStartupRatePrompt() {
+        _showStartupRatePrompt.value = false
+    }
+
+    fun startRandomRating() {
+        _showStartupRatePrompt.value = false
+        _activeRandomFood.value = repository.getEligibleRandomFood()
+        if (_activeRandomFood.value == null) {
+            showMessage("All foods have been rated recently!")
+        }
+    }
+
+    fun stopRandomRating() {
+        _activeRandomFood.value = null
+    }
+
+    fun rateRandomFoodAndNext(foodId: String, newRating: Int) {
+        viewModelScope.launch {
+            repository.rateFood(foodId, newRating)
+            val prefText = when (newRating) {
+                4 -> "Love ❤️"
+                3 -> "Like 👍"
+                2 -> "Neutral 😐"
+                1 -> "Dislike 👎"
+                else -> "Unrated"
+            }
+            showMessage("Rated food as $prefText")
+            val next = repository.getEligibleRandomFood()
+            _activeRandomFood.value = next
+            if (next == null) {
+                showMessage("Great job! All foods have been reviewed.")
+            }
         }
     }
 

@@ -70,7 +70,7 @@ import com.example.safefood.data.model.FoodCategory
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.data.model.NutrientType
 import com.example.safefood.ui.SafeFoodViewModel
-import com.example.safefood.ui.components.StarRatingBar
+import com.example.safefood.ui.components.EmojiPreferenceBar
 import com.example.safefood.ui.screens.nutrients.NutrientBadgeChip
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -126,6 +126,33 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("+ Group")
                 }
+                Spacer(modifier = Modifier.width(6.dp))
+                OutlinedButton(
+                    onClick = { viewModel.startRandomRating() },
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("🎲 Rate")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Season Filter Chips Row
+            val selectedSeasonFilter by viewModel.selectedSeasonFilter.collectAsState()
+            val seasons = listOf("All Seasons", "Spring", "Summer", "Autumn", "Winter", "All Year")
+            ScrollableTabRow(
+                selectedTabIndex = seasons.indexOf(selectedSeasonFilter).coerceAtLeast(0),
+                edgePadding = 0.dp,
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                modifier = Modifier.clip(RoundedCornerShape(12.dp))
+            ) {
+                seasons.forEach { season ->
+                    Tab(
+                        selected = selectedSeasonFilter == season,
+                        onClick = { viewModel.setSeasonFilter(season) },
+                        text = { Text("🌱 $season", fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -172,6 +199,7 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                     items(filteredCategories, key = { it.id }) { category ->
                         val categoryFoods = foods.filter { it.categoryId == category.id }
                             .filter { searchQuery.isBlank() || it.name.contains(searchQuery, ignoreCase = true) || it.notes.contains(searchQuery, ignoreCase = true) }
+                            .filter { selectedSeasonFilter == "All Seasons" || it.season.equals(selectedSeasonFilter, ignoreCase = true) }
 
                         val rotationAngle by animateFloatAsState(
                             targetValue = if (category.isExpanded) 180f else 0f,
@@ -390,13 +418,39 @@ fun FoodItemCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                coil.compose.AsyncImage(
+                    model = food.imageUrl.ifBlank { "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500&auto=format&fit=crop&q=60" },
+                    contentDescription = food.name,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = food.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = food.name,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+                        ) {
+                            Text(
+                                text = "🌱 ${food.season}",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    }
 
                     if (food.notes.isNotBlank()) {
                         Text(
@@ -451,10 +505,9 @@ fun FoodItemCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StarRatingBar(
+                EmojiPreferenceBar(
                     rating = food.rating,
-                    onRatingSelected = onRatingChanged,
-                    starSize = 22.dp
+                    onRatingSelected = onRatingChanged
                 )
 
                 val formattedDate = food.lastRatedTimestamp?.let {
@@ -588,13 +641,10 @@ fun AddOrEditFoodDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Text("Rating (1-5 Stars from Yucky to Yummy):", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                StarRatingBar(
+                Text("Food Preference (Emoji scale):", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                EmojiPreferenceBar(
                     rating = rating,
-                    onRatingSelected = { rating = it },
-                    starSize = 28.dp,
-                    showEmoji = true,
-                    showLabel = true
+                    onRatingSelected = { rating = it }
                 )
 
                 Text("Nutrients Classification:", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)

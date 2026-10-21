@@ -1,5 +1,7 @@
 package com.example.safefood.ui.navigation
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -9,6 +11,8 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -19,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -29,6 +34,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.safefood.ui.components.EmojiPreferenceBar
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -131,6 +138,66 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
+        // Startup Rate Prompt Dialog
+        val showStartupRatePrompt by viewModel.showStartupRatePrompt.collectAsState()
+        if (showStartupRatePrompt) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissStartupRatePrompt() },
+                title = { Text("🌟 Food Preference Check-in") },
+                text = { Text("You have foods that haven't been reviewed in 5 days (or ever). Would you like to rate some foods now to help build your future menus?") },
+                confirmButton = {
+                    Button(onClick = { viewModel.startRandomRating() }) {
+                        Text("Let's Rate!")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissStartupRatePrompt() }) {
+                        Text("Decline")
+                    }
+                }
+            )
+        }
+
+        // Active Random Rating Dialog
+        val activeRandomFood by viewModel.activeRandomFood.collectAsState()
+        activeRandomFood?.let { food ->
+            val categories by viewModel.categories.collectAsState()
+            val categoryName = categories.find { it.id == food.categoryId }?.name ?: "Food Group"
+
+            AlertDialog(
+                onDismissRequest = { viewModel.stopRandomRating() },
+                title = { Text("🎲 Quick Rate Food") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Group: $categoryName", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        Text(food.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        if (food.notes.isNotBlank()) {
+                            Text(food.notes, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text("Do you like this food?", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                        EmojiPreferenceBar(
+                            rating = food.rating,
+                            onRatingSelected = { newRating ->
+                                viewModel.rateRandomFoodAndNext(food.id, newRating)
+                            }
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.startRandomRating()
+                    }) {
+                        Text("Skip")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.stopRandomRating() }) {
+                        Text("Stop Rating")
+                    }
+                }
+            )
+        }
+
         NavHost(
             navController = navController,
             startDestination = Screen.Categories.route,

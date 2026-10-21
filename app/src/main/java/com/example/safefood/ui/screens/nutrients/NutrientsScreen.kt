@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.sp
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.data.model.NutrientType
 import com.example.safefood.ui.SafeFoodViewModel
-import com.example.safefood.ui.components.StarRatingBar
+import com.example.safefood.ui.components.EmojiPreferenceBar
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -251,10 +251,9 @@ fun NutrientFoodCard(
                     }
                 }
 
-                StarRatingBar(
+                EmojiPreferenceBar(
                     rating = food.rating,
-                    onRatingSelected = onRatingChanged,
-                    starSize = 22.dp
+                    onRatingSelected = onRatingChanged
                 )
             }
 

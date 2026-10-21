@@ -17,10 +17,12 @@ data class FoodItem(
     val id: String = UUID.randomUUID().toString(),
     val categoryId: String,
     val name: String,
-    val rating: Int = 0, // 0 = unrated, 1..5 stars
+    val rating: Int = 0, // 0 = unrated, 1..4 preferences
     val lastRatedTimestamp: Long? = null,
     val notes: String = "",
-    val nutrientTags: List<NutrientType> = emptyList()
+    val nutrientTags: List<NutrientType> = emptyList(),
+    val season: String = "All Year", // Spring, Summer, Autumn, Winter, All Year
+    val imageUrl: String = ""
 )
 
 @Serializable

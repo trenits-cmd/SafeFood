@@ -185,6 +185,24 @@ class SafeFoodRepository(private val context: Context) {
         saveFoodsToDisk(updated)
     }
 
+    fun hasFoodsNeedingRating(): Boolean {
+        val fiveDaysAgo = System.currentTimeMillis() - (5L * 24 * 60 * 60 * 1000L)
+        return _foods.value.any { it.lastRatedTimestamp == null || it.lastRatedTimestamp < fiveDaysAgo }
+    }
+
+    fun getEligibleRandomFood(): FoodItem? {
+        val fiveDaysAgo = System.currentTimeMillis() - (5L * 24 * 60 * 60 * 1000L)
+        val candidateFoods = _foods.value.filter {
+            it.lastRatedTimestamp == null || it.lastRatedTimestamp < fiveDaysAgo
+        }
+        if (candidateFoods.isEmpty()) return null
+
+        // Older ratings should be privileged (sort by timestamp ascending, null/0 first)
+        val sortedCandidates = candidateFoods.sortedBy { it.lastRatedTimestamp ?: 0L }
+        val topPool = sortedCandidates.take(10)
+        return topPool.randomOrNull()
+    }
+
     // --- Shopping List Actions ---
     suspend fun updateShoppingStatus(itemId: String, newStatus: ShoppingItemStatus) {
         val updated = _shoppingList.value.map {
@@ -254,7 +272,7 @@ class SafeFoodRepository(private val context: Context) {
 
         val rawItems = getCsvFoodRawData()
 
-        return rawItems.mapIndexed { index, (name, categoryName) ->
+        return rawItems.mapIndexed { index, (name, categoryName, season) ->
             val catId = categoryMap[categoryName.lowercase()] ?: categories.first().id
             val defaultNutrients = when (categoryName.lowercase()) {
                 "dairy" -> listOf(NutrientType.PROTEIN, NutrientType.HEALTHY_FAT)
@@ -266,24 +284,37 @@ class SafeFoodRepository(private val context: Context) {
                 else -> listOf(NutrientType.VITAMINS_MINERALS)
             }
 
-            // Give a few initial ratings for demo / immediate tab population
             val rating = when (name.lowercase()) {
-                "salmon", "whole milk", "cheddar cheese", "apple", "chicken breast", "tomato", "white rice", "brown rice", "butter" -> 5
-                "greek yogurt", "banana", "black beans", "beef steak", "broccoli", "rolled oats" -> 4
-                "skim milk", "lemon", "lentils", "pork chop", "spinach", "spaghetti" -> 3
+                "milk", "butter", "yogurt", "cheddar", "apple", "pear", "beef", "pork", "chicken", "carrot", "potato", "onion", "wheat", "rice" -> 4
+                "brie", "camembert", "gouda", "strawberry", "raspberry", "salmon", "broccoli", "spinach", "oats", "quinoa" -> 3
                 else -> 0
             }
 
             val ratedTime = if (rating > 0) now - (dayMillis * (index % 10 + 1)) else null
+            val imageUrl = getFoodImageUrl(categoryName, name)
 
             FoodItem(
                 categoryId = catId,
                 name = name,
                 rating = rating,
                 lastRatedTimestamp = ratedTime,
-                notes = if (rating >= 4) "Favorite comfort ingredient" else "",
-                nutrientTags = defaultNutrients
+                notes = if (rating >= 3) "Western European dataset item" else "",
+                nutrientTags = defaultNutrients,
+                season = season,
+                imageUrl = imageUrl
             )
+        }
+    }
+
+    private fun getFoodImageUrl(category: String, name: String): String {
+        return when (category.lowercase()) {
+            "dairy" -> "https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=500&auto=format&fit=crop&q=60"
+            "fruits" -> "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&auto=format&fit=crop&q=60"
+            "legumes" -> "https://images.unsplash.com/photo-1585998016460-2d2cdbf3e85a?w=500&auto=format&fit=crop&q=60"
+            "meat" -> "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=500&auto=format&fit=crop&q=60"
+            "vegetables" -> "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60"
+            "carbohydrates" -> "https://images.unsplash.com/photo-1550547660-d9450f859349?w=500&auto=format&fit=crop&q=60"
+            else -> "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500&auto=format&fit=crop&q=60"
         }
     }
 
@@ -296,62 +327,88 @@ class SafeFoodRepository(private val context: Context) {
         )
     }
 
-    private fun getCsvFoodRawData(): List<Pair<String, String>> {
+    private fun getCsvFoodRawData(): List<Triple<String, String, String>> {
         return listOf(
             // Dairy
-            "Whole Milk" to "Dairy", "Skim Milk" to "Dairy", "Cheddar Cheese" to "Dairy", "Mozzarella Cheese" to "Dairy",
-            "Greek Yogurt" to "Dairy", "Butter" to "Dairy", "Heavy Cream" to "Dairy", "Sour Cream" to "Dairy",
-            "Cottage Cheese" to "Dairy", "Parmesan Cheese" to "Dairy", "Swiss Cheese" to "Dairy", "Gouda Cheese" to "Dairy",
-            "Brie Cheese" to "Dairy", "Camembert" to "Dairy", "Provolone Cheese" to "Dairy", "Feta Cheese" to "Dairy",
-            "Ricotta Cheese" to "Dairy", "Paneer" to "Dairy", "Ghee" to "Dairy", "Cream Cheese" to "Dairy",
-            "Kefir" to "Dairy", "Buttermilk" to "Dairy", "Condensed Milk" to "Dairy", "Evaporated Milk" to "Dairy",
-            "Mascarpone" to "Dairy", "Quark" to "Dairy", "Frozen Yogurt" to "Dairy", "Ice Cream" to "Dairy",
-            "Whipped Cream" to "Dairy", "String Cheese" to "Dairy", "Skyr" to "Dairy", "Labneh" to "Dairy",
+            Triple("Milk", "Dairy", "All Year"), Triple("Butter", "Dairy", "All Year"), Triple("Yogurt", "Dairy", "All Year"),
+            Triple("Cheddar", "Dairy", "All Year"), Triple("Brie", "Dairy", "All Year"), Triple("Camembert", "Dairy", "All Year"),
+            Triple("Gouda", "Dairy", "All Year"), Triple("Roquefort", "Dairy", "All Year"), Triple("Parmesan", "Dairy", "All Year"),
+            Triple("Mozzarella", "Dairy", "All Year"), Triple("Feta", "Dairy", "All Year"), Triple("Gruyere", "Dairy", "All Year"),
+            Triple("Emmental", "Dairy", "All Year"), Triple("Ricotta", "Dairy", "All Year"), Triple("Mascarpone", "Dairy", "All Year"),
+            Triple("Gorgonzola", "Dairy", "All Year"), Triple("Manchego", "Dairy", "All Year"), Triple("Pecorino", "Dairy", "All Year"),
+            Triple("Cream", "Dairy", "All Year"), Triple("Sour Cream", "Dairy", "All Year"), Triple("Creme Fraiche", "Dairy", "All Year"),
+            Triple("Quark", "Dairy", "All Year"), Triple("Cottage Cheese", "Dairy", "All Year"), Triple("Provolone", "Dairy", "All Year"),
+            Triple("Edam", "Dairy", "All Year"), Triple("Havarti", "Dairy", "All Year"), Triple("Jarlsberg", "Dairy", "All Year"),
+            Triple("Fontina", "Dairy", "All Year"), Triple("Taleggio", "Dairy", "All Year"), Triple("Halloumi", "Dairy", "All Year"),
+            Triple("Paneer", "Dairy", "All Year"), Triple("Burrata", "Dairy", "All Year"), Triple("Stracciatella", "Dairy", "All Year"),
+            Triple("Clotted Cream", "Dairy", "All Year"), Triple("Buttermilk", "Dairy", "All Year"), Triple("Kefir", "Dairy", "All Year"),
+            Triple("Whey", "Dairy", "All Year"), Triple("Ghee", "Dairy", "All Year"), Triple("Condensed Milk", "Dairy", "All Year"),
+            Triple("Evaporated Milk", "Dairy", "All Year"), Triple("Ice Cream", "Dairy", "All Year"), Triple("Gelato", "Dairy", "All Year"),
+            Triple("Skim Milk", "Dairy", "All Year"), Triple("Whole Milk", "Dairy", "All Year"), Triple("Goat Cheese", "Dairy", "All Year"),
+            Triple("Sheep Cheese", "Dairy", "All Year"), Triple("Blue Cheese", "Dairy", "All Year"), Triple("Swiss Cheese", "Dairy", "All Year"),
+            Triple("Munster", "Dairy", "All Year"), Triple("Neufchatel", "Dairy", "All Year"),
 
             // Fruits
-            "Apple" to "Fruits", "Banana" to "Fruits", "Orange" to "Fruits", "Strawberry" to "Fruits",
-            "Blueberry" to "Fruits", "Raspberry" to "Fruits", "Blackberry" to "Fruits", "Pineapple" to "Fruits",
-            "Mango" to "Fruits", "Papaya" to "Fruits", "Peach" to "Fruits", "Nectarine" to "Fruits",
-            "Plum" to "Fruits", "Apricot" to "Fruits", "Cherry" to "Fruits", "Grape" to "Fruits",
-            "Watermelon" to "Fruits", "Cantaloupe" to "Fruits", "Kiwi" to "Fruits", "Lemon" to "Fruits",
-            "Lime" to "Fruits", "Grapefruit" to "Fruits", "Pomegranate" to "Fruits", "Fig" to "Fruits",
-            "Date" to "Fruits", "Cranberry" to "Fruits", "Raisin" to "Fruits", "Dried Apricot" to "Fruits",
+            Triple("Apple", "Fruits", "Autumn"), Triple("Pear", "Fruits", "Autumn"), Triple("Plum", "Fruits", "Summer"),
+            Triple("Peach", "Fruits", "Summer"), Triple("Cherry", "Fruits", "Spring"), Triple("Strawberry", "Fruits", "Spring"),
+            Triple("Raspberry", "Fruits", "Summer"), Triple("Blackberry", "Fruits", "Summer"), Triple("Blueberry", "Fruits", "Summer"),
+            Triple("Cranberry", "Fruits", "Autumn"), Triple("Grape", "Fruits", "Autumn"), Triple("Melon", "Fruits", "Summer"),
+            Triple("Watermelon", "Fruits", "Summer"), Triple("Lemon", "Fruits", "Winter"), Triple("Orange", "Fruits", "Winter"),
+            Triple("Mandarin", "Fruits", "Winter"), Triple("Clementine", "Fruits", "Winter"), Triple("Grapefruit", "Fruits", "Winter"),
+            Triple("Lime", "Fruits", "Winter"), Triple("Apricot", "Fruits", "Spring"), Triple("Nectarine", "Fruits", "Summer"),
+            Triple("Fig", "Fruits", "Summer"), Triple("Pomegranate", "Fruits", "Autumn"), Triple("Kiwi", "Fruits", "Spring"),
+            Triple("Banana", "Fruits", "All Year"), Triple("Pineapple", "Fruits", "All Year"), Triple("Mango", "Fruits", "All Year"),
+            Triple("Papaya", "Fruits", "All Year"), Triple("Coconut", "Fruits", "All Year"), Triple("Guava", "Fruits", "All Year"),
+            Triple("Passion Fruit", "Fruits", "All Year"), Triple("Lychee", "Fruits", "All Year"), Triple("Dragon Fruit", "Fruits", "All Year"),
+            Triple("Starfruit", "Fruits", "All Year"), Triple("Persimmon", "Fruits", "Autumn"), Triple("Quince", "Fruits", "Autumn"),
+            Triple("Medlar", "Fruits", "Autumn"), Triple("Mulberry", "Fruits", "Summer"), Triple("Gooseberry", "Fruits", "Summer"),
+            Triple("Redcurrant", "Fruits", "Summer"), Triple("Blackcurrant", "Fruits", "Summer"), Triple("Whitecurrant", "Fruits", "Summer"),
+            Triple("Elderberry", "Fruits", "Autumn"), Triple("Rowanberry", "Fruits", "Autumn"), Triple("Sloe", "Fruits", "Autumn"),
+            Triple("Rosehip", "Fruits", "Autumn"), Triple("Sea Buckthorn", "Fruits", "Autumn"), Triple("Cloudberry", "Fruits", "Summer"),
+            Triple("Lingonberry", "Fruits", "Autumn"), Triple("Boysenberry", "Fruits", "Summer"), Triple("Loganberry", "Fruits", "Summer"),
+            Triple("Tayberry", "Fruits", "Summer"), Triple("Marionberry", "Fruits", "Summer"), Triple("Salmonberry", "Fruits", "Summer"),
+            Triple("Thimbleberry", "Fruits", "Summer"), Triple("Bearberry", "Fruits", "Summer"), Triple("Crowberry", "Fruits", "Summer"),
+            Triple("Hackberry", "Fruits", "Summer"), Triple("Huckleberry", "Fruits", "Summer"), Triple("Serviceberry", "Fruits", "Summer"),
+            Triple("Chokeberry", "Fruits", "Autumn"), Triple("Buffaloberry", "Fruits", "Autumn"), Triple("Silverberry", "Fruits", "Autumn"),
+            Triple("Autumn Olive", "Fruits", "Autumn"), Triple("Goumi", "Fruits", "Autumn"), Triple("Gumi", "Fruits", "Autumn"),
+            Triple("Jujube", "Fruits", "Autumn"), Triple("Date", "Fruits", "All Year"), Triple("Olive", "Fruits", "All Year"),
+            Triple("Avocado", "Fruits", "All Year"), Triple("Tomato", "Fruits", "Summer"), Triple("Bell Pepper", "Fruits", "Summer"),
+            Triple("Eggplant", "Fruits", "Summer"), Triple("Cucumber", "Fruits", "Summer"), Triple("Zucchini", "Fruits", "Summer"),
+            Triple("Pumpkin", "Fruits", "Autumn"), Triple("Squash", "Fruits", "Autumn"),
 
             // Legumes
-            "Lentils" to "Legumes", "Red Lentils" to "Legumes", "Green Lentils" to "Legumes", "Chickpeas (Garbanzo Beans)" to "Legumes",
-            "Black Beans" to "Legumes", "Kidney Beans" to "Legumes", "Pinto Beans" to "Legumes", "Navy Beans" to "Legumes",
-            "Lima Beans" to "Legumes", "Soybeans" to "Legumes", "Edamame" to "Legumes", "Peanuts" to "Legumes",
-            "Green Peas" to "Legumes", "Split Peas" to "Legumes", "Black-eyed Peas" to "Legumes", "Fava Beans" to "Legumes",
-            "Tofu" to "Legumes", "Tempeh" to "Legumes", "Peanut Butter" to "Legumes", "Hummus" to "Legumes",
-            "Falafel" to "Legumes", "Lentil Pasta" to "Legumes", "Chickpea Pasta" to "Legumes",
+            Triple("Chickpea", "Legumes", "All Year"), Triple("Lentil", "Legumes", "All Year"), Triple("Green Pea", "Legumes", "All Year"),
+            Triple("Black-Eyed Pea", "Legumes", "All Year"), Triple("Kidney Bean", "Legumes", "All Year"), Triple("Black Bean", "Legumes", "All Year"),
+            Triple("Pinto Bean", "Legumes", "All Year"), Triple("Navy Bean", "Legumes", "All Year"), Triple("Cannellini Bean", "Legumes", "All Year"),
+            Triple("Lima Bean", "Legumes", "All Year"), Triple("Fava Bean", "Legumes", "All Year"), Triple("Mung Bean", "Legumes", "All Year"),
+            Triple("Adzuki Bean", "Legumes", "All Year"), Triple("Soybean", "Legumes", "All Year"), Triple("Peanut", "Legumes", "All Year"),
+            Triple("Macadamia Nut", "Legumes", "All Year"), Triple("Cashew", "Legumes", "All Year"),
 
             // Meat
-            "Chicken Breast" to "Meat", "Chicken Thigh" to "Meat", "Chicken Wing" to "Meat", "Chicken Drumstick" to "Meat",
-            "Whole Chicken" to "Meat", "Turkey Breast" to "Meat", "Ground Turkey" to "Meat", "Duck Breast" to "Meat",
-            "Beef Steak" to "Meat", "Ribeye Steak" to "Meat", "Sirloin Steak" to "Meat", "Filet Mignon" to "Meat",
-            "Ground Beef" to "Meat", "Beef Brisket" to "Meat", "Pork Chop" to "Meat", "Pork Loin" to "Meat",
-            "Pork Tenderloin" to "Meat", "Pork Belly" to "Meat", "Bacon" to "Meat", "Ham" to "Meat",
-            "Salami" to "Meat", "Pepperoni" to "Meat", "Pork Sausage" to "Meat", "Lamb Chop" to "Meat",
-            "Ground Lamb" to "Meat", "Beef Jerky" to "Meat", "Turkey Bacon" to "Meat",
+            Triple("Beef", "Meat", "All Year"), Triple("Pork", "Meat", "All Year"), Triple("Lamb", "Meat", "All Year"),
+            Triple("Chicken", "Meat", "All Year"), Triple("Turkey", "Meat", "All Year"), Triple("Duck", "Meat", "All Year"),
+            Triple("Bacon", "Meat", "All Year"), Triple("Ham", "Meat", "All Year"), Triple("Sausage", "Meat", "All Year"),
+            Triple("Steak", "Meat", "All Year"), Triple("Burger", "Meat", "All Year"), Triple("Salami", "Meat", "All Year"),
 
             // Vegetables
-            "Broccoli" to "Vegetables", "Cauliflower" to "Vegetables", "Spinach" to "Vegetables", "Kale" to "Vegetables",
-            "Swiss Chard" to "Vegetables", "Arugula" to "Vegetables", "Romaine Lettuce" to "Vegetables", "Iceberg Lettuce" to "Vegetables",
-            "Lettuce" to "Vegetables", "Cabbage" to "Vegetables", "Brussels Sprouts" to "Vegetables", "Asparagus" to "Vegetables",
-            "Celery" to "Vegetables", "Cucumber" to "Vegetables", "Zucchini" to "Vegetables", "Eggplant" to "Vegetables",
-            "Bell Pepper (Red)" to "Vegetables", "Bell Pepper (Green)" to "Vegetables", "Jalapeño Pepper" to "Vegetables",
-            "Tomato" to "Vegetables", "Cherry Tomato" to "Vegetables", "Roma Tomato" to "Vegetables", "Carrot" to "Vegetables",
-            "Radish" to "Vegetables", "Garlic" to "Vegetables", "Onion (Yellow)" to "Vegetables", "Onion (Red)" to "Vegetables",
-            "Sweet Potato" to "Vegetables", "Russet Potato" to "Vegetables", "Red Potato" to "Vegetables", "Yukon Gold Potato" to "Vegetables",
-            "Pumpkin" to "Vegetables", "Butternut Squash" to "Vegetables", "Zucchini" to "Vegetables",
+            Triple("Carrot", "Vegetables", "All Year"), Triple("Potato", "Vegetables", "All Year"), Triple("Onion", "Vegetables", "All Year"),
+            Triple("Garlic", "Vegetables", "All Year"), Triple("Leek", "Vegetables", "Winter"), Triple("Celery", "Vegetables", "Winter"),
+            Triple("Broccoli", "Vegetables", "Winter"), Triple("Cauliflower", "Vegetables", "Winter"), Triple("Cabbage", "Vegetables", "Winter"),
+            Triple("Brussels Sprout", "Vegetables", "Autumn"), Triple("Kale", "Vegetables", "Winter"), Triple("Spinach", "Vegetables", "Spring"),
+            Triple("Lettuce", "Vegetables", "All Year"), Triple("Arugula", "Vegetables", "Spring"), Triple("Radish", "Vegetables", "Spring"),
+            Triple("Turnip", "Vegetables", "Autumn"), Triple("Parsnip", "Vegetables", "Autumn"), Triple("Beetroot", "Vegetables", "Autumn"),
+            Triple("Sweet Potato", "Vegetables", "Autumn"), Triple("Artichoke", "Vegetables", "Spring"), Triple("Asparagus", "Vegetables", "Spring"),
+            Triple("Corn", "Vegetables", "Summer"), Triple("Cucumber Green", "Vegetables", "Summer"), Triple("Eggplant Purple", "Vegetables", "Summer"),
+            Triple("Tomato Red", "Vegetables", "Summer"), Triple("Zucchini Green", "Vegetables", "Summer"), Triple("Butternut Squash", "Vegetables", "Autumn"),
 
             // Carbohydrates
-            "White Rice" to "Carbohydrates", "Brown Rice" to "Carbohydrates", "Jasmine Rice" to "Carbohydrates", "Basmati Rice" to "Carbohydrates",
-            "Wild Rice" to "Carbohydrates", "Arborio Rice" to "Carbohydrates", "Rolled Oats" to "Carbohydrates", "Steel-Cut Oats" to "Carbohydrates",
-            "Quinoa" to "Carbohydrates", "Couscous" to "Carbohydrates", "Bulgur" to "Carbohydrates", "Farro" to "Carbohydrates",
-            "Barley" to "Carbohydrates", "Buckwheat" to "Carbohydrates", "Gnocchi" to "Carbohydrates", "Spaghetti" to "Carbohydrates",
-            "Penne" to "Carbohydrates", "Fettuccine" to "Carbohydrates", "Rigatoni" to "Carbohydrates", "Macaroni" to "Carbohydrates",
-            "Ramen Noodles" to "Carbohydrates", "Udon Noodles" to "Carbohydrates", "Soba Noodles" to "Carbohydrates"
+            Triple("Wheat", "Carbohydrates", "All Year"), Triple("Rice", "Carbohydrates", "All Year"), Triple("Barley", "Carbohydrates", "All Year"),
+            Triple("Oats", "Carbohydrates", "All Year"), Triple("Rye", "Carbohydrates", "All Year"), Triple("Quinoa", "Carbohydrates", "All Year"),
+            Triple("Buckwheat", "Carbohydrates", "All Year"), Triple("Bread", "Carbohydrates", "All Year"), Triple("Baguette", "Carbohydrates", "All Year"),
+            Triple("Croissant", "Carbohydrates", "All Year"), Triple("Pasta", "Carbohydrates", "All Year"), Triple("Spaghetti", "Carbohydrates", "All Year"),
+            Triple("Macaroni", "Carbohydrates", "All Year"), Triple("Penne", "Carbohydrates", "All Year"), Triple("Noodle", "Carbohydrates", "All Year"),
+            Triple("Couscous", "Carbohydrates", "All Year"), Triple("Polenta", "Carbohydrates", "All Year"), Triple("Cake", "Carbohydrates", "All Year"),
+            Triple("Cookie", "Carbohydrates", "All Year"), Triple("Granola", "Carbohydrates", "All Year")
         )
     }
 }

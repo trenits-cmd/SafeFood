@@ -147,6 +147,91 @@ class AiMenuPlannerTest {
     }
 
     @Test
+    fun `breakfast without bread or oats is a light fruit and dairy plate`() {
+        val foods = listOf(
+            food("Milk", "dairy"),
+            food("Greek Yogurt", "dairy"),
+            food("Apple", "fruits"),
+            food("Pear", "fruits"),
+            food("Chicken Breast", "meat"),
+            food("Rice", "carbs"),
+            food("Potato", "vegetables"),
+            food("Carrots", "vegetables")
+        )
+
+        val plan = AiMenuPlanner.generateMealPlan(
+            foods = foods,
+            categories = categories,
+            goal = AiMenuPlanner.PlanningGoal.SAFE_ONLY,
+            daysCount = 3
+        )
+
+        for (day in plan.days) {
+            assertTrue(
+                "Breakfast should be fruit and/or dairy, was '${day.breakfast}'",
+                day.breakfast.contains("Apple") || day.breakfast.contains("Pear") ||
+                    day.breakfast.contains("Yogurt") || day.breakfast.contains("Milk")
+            )
+            assertFalse(
+                "Breakfast must not be a plain side dish, was '${day.breakfast}'",
+                day.breakfast.contains("Rice") || day.breakfast.contains("Potato") ||
+                    day.breakfast.contains("Chicken")
+            )
+        }
+    }
+
+    @Test
+    fun `pear is used as fruit and never as the vegetable of a main meal`() {
+        val foods = listOf(
+            food("Chicken Breast", "meat"),
+            food("Rice", "carbs"),
+            food("Pear", "fruits"),
+            food("Apple", "fruits"),
+            food("Greek Yogurt", "dairy")
+        )
+
+        val plan = AiMenuPlanner.generateMealPlan(
+            foods = foods,
+            categories = categories,
+            goal = AiMenuPlanner.PlanningGoal.SAFE_ONLY,
+            daysCount = 4
+        )
+
+        for (day in plan.days) {
+            assertFalse("Pear must not stand in as a vegetable: '${day.lunch}'", day.lunch.contains("Pear"))
+            assertFalse("Pear must not stand in as a vegetable: '${day.dinner}'", day.dinner.contains("Pear"))
+            assertFalse("A meal must not repeat the same food", Regex("Potato with Potato").containsMatchIn(day.dinner))
+        }
+    }
+
+    @Test
+    fun `meals never repeat the same food within one meal`() {
+        val foods = listOf(
+            food("Pork", "meat"),
+            food("Rice", "carbs"),
+            food("Potato", "vegetables"),
+            food("Carrots", "vegetables"),
+            food("Onion", "vegetables"),
+            food("Apple", "fruits"),
+            food("Greek Yogurt", "dairy")
+        )
+
+        val plan = AiMenuPlanner.generateMealPlan(
+            foods = foods,
+            categories = categories,
+            goal = AiMenuPlanner.PlanningGoal.ROTATION_HELPER,
+            daysCount = 7
+        )
+
+        for (day in plan.days) {
+            for (meal in listOf(day.breakfast, day.lunch, day.dinner)) {
+                val names = meal.split(" with ", " and ").map { it.trim() }
+                assertEquals("Meal repeats a food: '$meal'", names.size, names.distinct().size)
+            }
+        }
+    }
+
+    @Test
     fun `custom instructions exclude unwanted foods`() {
         val filtered = AiMenuPlanner.applyCustomInstructions(pool, "no yogurt, no chicken")
 

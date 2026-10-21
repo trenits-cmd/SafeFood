@@ -175,21 +175,44 @@ object AiMenuPlanner {
             pick(pool, roles, preferredIds, usedToday, usedAcrossPlan, goal, predicate)
 
         val grain = pickRole(setOf(MealRole.GRAIN)) { isBreakfastGrain(it) }
-            ?: pickRole(setOf(MealRole.GRAIN))
         val fruit = pickRole(setOf(MealRole.FRUIT))
-        val dairy = pickRole(setOf(MealRole.DAIRY)) { !isCheeseOnly(it) && !isDrink(it) }
+        val dairy = pickRole(setOf(MealRole.DAIRY)) { isYogurt(it) }
+            ?: pickRole(setOf(MealRole.DAIRY)) { isBreakfastDairy(it) }
+            ?: pickRole(setOf(MealRole.DAIRY)) { !isCheeseOnly(it) }
             ?: pickRole(setOf(MealRole.DAIRY))
         val egg = pickRole(setOf(MealRole.PROTEIN)) { isBreakfastProtein(it) }
         val spread = pickRole(setOf(MealRole.FAT)) { isSpread(it) }
 
         val chosen = mutableListOf<FoodItem>()
-        grain?.let { chosen += it }
-        fruit?.let { chosen += it }
-        (dairy ?: egg ?: spread)?.let { chosen += it }
+        when {
+            // Full breakfast: a breakfast grain plus fruit and/or dairy.
+            grain != null -> {
+                chosen += grain
+                (fruit ?: egg ?: spread)?.let { chosen += it }
+                (dairy ?: egg)?.let { if (chosen.none { c -> c.id == it.id }) chosen += it }
+            }
+            // No bread/oats available: a fruit + dairy plate (e.g. "Yogurt with Apple"),
+            // never a plain dinner side such as rice or potato.
+            dairy != null && fruit != null -> {
+                chosen += dairy
+                chosen += fruit
+            }
+            fruit != null && spread != null -> {
+                chosen += fruit
+                chosen += spread
+            }
+            egg != null && fruit != null -> {
+                chosen += egg
+                chosen += fruit
+            }
+            fruit != null -> chosen += fruit
+            dairy != null -> chosen += dairy
+            egg != null -> chosen += egg
+        }
 
         if (chosen.isEmpty()) {
-            // No classic breakfast role available: offer a light plate, never a plain vegetable.
-            val lightRoles = setOf(MealRole.FRUIT, MealRole.DAIRY, MealRole.FAT, MealRole.GRAIN)
+            // Last resort: keep it light, never a plain vegetable.
+            val lightRoles = setOf(MealRole.FRUIT, MealRole.DAIRY, MealRole.FAT)
             pickRole(lightRoles)?.let { chosen += it }
             pickRole(lightRoles)?.let { if (chosen.none { c -> c.id == it.id }) chosen += it }
         }
@@ -210,7 +233,9 @@ object AiMenuPlanner {
         val protein = pickRole(setOf(MealRole.PROTEIN))
         val grain = pickRole(setOf(MealRole.GRAIN)) { isMainGrain(it) }
             ?: pickRole(setOf(MealRole.GRAIN))
-        val vegetable = pickRole(setOf(MealRole.VEGETABLE))
+        // Prefer a "real" vegetable (carrot, broccoli, ...) over an aromatic cooking base like onion.
+        val vegetable = pickRole(setOf(MealRole.VEGETABLE)) { !isAromatic(it) }
+            ?: pickRole(setOf(MealRole.VEGETABLE))
 
         val chosen = mutableListOf<FoodItem>()
         protein?.let { chosen += it }
@@ -226,7 +251,7 @@ object AiMenuPlanner {
         if (variance % 2 == 1 && chosen.size < 3) {
             pickRole(setOf(MealRole.VEGETABLE))?.let { chosen += it }
         }
-        return chosen.take(3)
+        return chosen.distinctBy { it.id }.take(3)
     }
 
     private fun composeSnacks(
@@ -236,17 +261,24 @@ object AiMenuPlanner {
         usedAcrossPlan: MutableSet<String>,
         goal: PlanningGoal
     ): List<FoodItem> {
+        fun pickRole(roles: Set<MealRole>, predicate: (FoodItem) -> Boolean = { true }): FoodItem? =
+            pick(pool, roles, preferredIds, usedToday, usedAcrossPlan, goal, predicate)
+
         val chosen = mutableListOf<FoodItem>()
-        val primaryRoles = setOf(MealRole.FRUIT, MealRole.DAIRY, MealRole.VEGETABLE)
-        pick(pool, primaryRoles, preferredIds, usedToday, usedAcrossPlan, goal)?.let { chosen += it }
-        pick(pool, primaryRoles, preferredIds, usedToday, usedAcrossPlan, goal) {
-            chosen.none { c -> c.id == it.id }
-        }?.let { chosen += it }
+        // Snacks are fruit/dairy/vegetable based; fruit first, then a light dairy or a vegetable.
+        val primary = pickRole(setOf(MealRole.FRUIT))
+            ?: pickRole(setOf(MealRole.DAIRY)) { !isCheeseOnly(it) }
+            ?: pickRole(setOf(MealRole.VEGETABLE))
+        primary?.let { chosen += it }
+
         if (chosen.size < 2) {
-            pick(pool, setOf(MealRole.FAT), preferredIds, usedToday, usedAcrossPlan, goal) { isSpread(it) }
-                ?.let { chosen += it }
+            val secondary = pickRole(setOf(MealRole.DAIRY)) { isYogurt(it) }
+                ?: pickRole(setOf(MealRole.VEGETABLE)) { chosen.none { c -> c.id == it.id } }
+                ?: pickRole(setOf(MealRole.FAT)) { isSpread(it) }
+                ?: pickRole(setOf(MealRole.DAIRY)) { chosen.none { c -> c.id == it.id } && !isCheeseOnly(it) }
+            secondary?.let { chosen += it }
         }
-        return chosen
+        return chosen.distinctBy { it.id }
     }
 
     // ------------------------------------------------------------------ selection helpers
@@ -341,7 +373,34 @@ object AiMenuPlanner {
             .any { n.contains(it) }
     }
 
-    private fun isCheeseOnly(food: FoodItem): Boolean = food.name.contains("cheese", ignoreCase = true)
+    private fun isCheeseOnly(food: FoodItem): Boolean {
+        val n = food.name.lowercase(Locale.US)
+        if (n.contains("cheese")) return true
+        val cheeses = listOf(
+            "cheddar", "brie", "camembert", "gouda", "mozzarella", "feta", "parmesan",
+            "pecorino", "roquefort", "gorgonzola", "gruyere", "emmental", "havarti",
+            "jarlsberg", "manchego", "munster", "taleggio", "provolone", "edam", "ricotta",
+            "mascarpone", "halloumi", "paneer", "burrata", "neufchatel"
+        )
+        return cheeses.any { n.contains(it) }
+    }
+
+    private fun isBreakfastDairy(food: FoodItem): Boolean {
+        val n = food.name.lowercase(Locale.US)
+        return listOf("yogurt", "yoghurt", "skyr", "quark", "kefir", "milk", "cream", "buttermilk")
+            .any { n.contains(it) }
+    }
+
+    private fun isYogurt(food: FoodItem): Boolean {
+        val n = food.name.lowercase(Locale.US)
+        return listOf("yogurt", "yoghurt", "skyr", "quark", "kefir").any { n.contains(it) }
+    }
+
+    private fun isAromatic(food: FoodItem): Boolean {
+        val n = food.name.lowercase(Locale.US)
+        return listOf("onion", "garlic", "leek", "shallot", "scallion", "chive")
+            .any { n.contains(it) }
+    }
 
     private fun isDrink(food: FoodItem): Boolean {
         val n = food.name.lowercase(Locale.US)
@@ -396,6 +455,7 @@ object AiMenuPlanner {
         }
         if (name.contains("peach") || name.contains("pear")) {
             roles -= MealRole.PROTEIN
+            roles -= MealRole.VEGETABLE
             roles += MealRole.FRUIT
         }
 
@@ -445,7 +505,7 @@ object AiMenuPlanner {
     private val VEGETABLE_KEYS = listOf(
         "broccoli", "carrot", "spinach", "kale", "lettuce", "cabbage", "cauliflower",
         "cucumber", "zucchini", "courgette", "bell pepper", "onion", "garlic", "leek",
-        "celery", "asparagus", "artichoke", "bean", "pea", "beet", "radish", "turnip",
+        "celery", "asparagus", "artichoke", "bean", "peas", "green pea", "beet", "radish", "turnip",
         "pumpkin", "squash", "mushroom", "eggplant", "aubergine", "tomato", "fennel",
         "chard", "sprout", "potato", "sweet potato", "yam"
     )

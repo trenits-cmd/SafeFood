@@ -84,6 +84,7 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
     val categories by viewModel.categories.collectAsState()
     val foods by viewModel.foods.collectAsState()
     val nutrientFilters by viewModel.selectedNutrientFilters.collectAsState()
+    val selectedSeasonFilter by viewModel.selectedSeasonFilter.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
     var selectedSubTabCategoryId by remember { mutableStateOf<String?>(null) } // null = All Food Groups
@@ -93,10 +94,28 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
 
     val dateFormat = remember { SimpleDateFormat("MMM d, yyyy 'at' HH:mm", Locale.getDefault()) }
 
-    val filteredCategories = remember(categories, selectedSubTabCategoryId) {
-        if (selectedSubTabCategoryId == null) categories
-        else categories.filter { it.id == selectedSubTabCategoryId }
+    // Search, season and nutrient filters are combined (nutrients match any selected tag).
+    fun matchesFilters(food: FoodItem): Boolean {
+        val matchesSearch = searchQuery.isBlank() ||
+            food.name.contains(searchQuery, ignoreCase = true) ||
+            food.notes.contains(searchQuery, ignoreCase = true)
+        val matchesSeason = selectedSeasonFilter == "All Seasons" ||
+            food.season.equals(selectedSeasonFilter, ignoreCase = true)
+        val matchesNutrients = nutrientFilters.isEmpty() ||
+            food.nutrientTags.any { tag -> tag in nutrientFilters }
+        return matchesSearch && matchesSeason && matchesNutrients
     }
+
+    val filtersActive = searchQuery.isNotBlank() ||
+        selectedSeasonFilter != "All Seasons" ||
+        nutrientFilters.isNotEmpty()
+    val visibleFoods = foods.filter(::matchesFilters)
+
+    val filteredCategories = if (selectedSubTabCategoryId == null) {
+        categories
+    } else {
+        categories.filter { it.id == selectedSubTabCategoryId }
+    }.filter { category -> !filtersActive || visibleFoods.any { it.categoryId == category.id } }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -141,7 +160,6 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
             Spacer(modifier = Modifier.height(8.dp))
 
             // Season Filter Chips Row
-            val selectedSeasonFilter by viewModel.selectedSeasonFilter.collectAsState()
             val seasons = listOf("All Seasons", "Spring", "Summer", "Autumn", "Winter", "All Year")
             ScrollableTabRow(
                 selectedTabIndex = seasons.indexOf(selectedSeasonFilter).coerceAtLeast(0),
@@ -168,6 +186,28 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                 modifier = Modifier.fillMaxWidth()
             )
 
+            if (filtersActive) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${visibleFoods.size} of ${foods.size} foods match",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    TextButton(onClick = {
+                        searchQuery = ""
+                        viewModel.setSeasonFilter("All Seasons")
+                        viewModel.clearNutrientFilters()
+                    }) {
+                        Text("Reset filters", fontSize = 12.sp)
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
             // Food Group Sub-Tabs (Sub tab in Categories: All, Dairy, Fruits, Legumes, Meat, Vegetables, Carbohydrates)
@@ -184,7 +224,7 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                 )
 
                 categories.forEach { category ->
-                    val itemCount = foods.count { it.categoryId == category.id }
+                    val itemCount = visibleFoods.count { it.categoryId == category.id }
                     Tab(
                         selected = selectedSubTabCategoryId == category.id,
                         onClick = { selectedSubTabCategoryId = category.id },
@@ -202,7 +242,14 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No food groups found. Tap '+' to create one!", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        if (filtersActive) {
+                            "No foods match the active filters."
+                        } else {
+                            "No food groups found. Tap '+' to create one!"
+                        },
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
             } else {
                 LazyColumn(
@@ -211,13 +258,12 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                 ) {
                     filteredCategories.forEach { category ->
                         val categoryFoods = foods.filter { it.categoryId == category.id }
-                            .filter { searchQuery.isBlank() || it.name.contains(searchQuery, ignoreCase = true) || it.notes.contains(searchQuery, ignoreCase = true) }
-                            .filter { selectedSeasonFilter == "All Seasons" || it.season.equals(selectedSeasonFilter, ignoreCase = true) }
-                            .filter { nutrientFilters.isEmpty() || it.nutrientTags.any { tag -> tag in nutrientFilters } }
+                            .filter(::matchesFilters)
+                        val isExpanded = category.isExpanded || filtersActive
 
                         item(key = "header-${category.id}") {
                         val rotationAngle by animateFloatAsState(
-                            targetValue = if (category.isExpanded) 180f else 0f,
+                            targetValue = if (isExpanded) 180f else 0f,
                             label = "expandRotation"
                         )
 
@@ -269,7 +315,11 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                                             )
                                         }
                                         Text(
-                                            text = "${categoryFoods.size} items • ${if (category.isExpanded) "Expanded" else "Folded"}",
+                                            text = if (filtersActive) {
+                                                "${categoryFoods.size} matching item${if (categoryFoods.size == 1) "" else "s"}"
+                                            } else {
+                                                "${categoryFoods.size} items • ${if (category.isExpanded) "Expanded" else "Folded"}"
+                                            },
                                             fontSize = 11.sp,
                                             color = MaterialTheme.colorScheme.primary,
                                             fontWeight = FontWeight.Medium
@@ -301,11 +351,15 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                             }
                         }
                         }
-                        if (category.isExpanded) {
+                        if (isExpanded) {
                             if (categoryFoods.isEmpty()) {
                                 item(key = "empty-${category.id}") {
                                     Text(
-                                        text = "No food items in this group yet.",
+                                        text = if (filtersActive) {
+                                            "No foods in this group match the active filters."
+                                        } else {
+                                            "No food items in this group yet."
+                                        },
                                         fontSize = 13.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)

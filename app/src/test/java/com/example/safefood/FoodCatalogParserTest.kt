@@ -6,6 +6,7 @@ import com.example.safefood.data.catalog.FoodImageResolver
 import com.example.safefood.data.model.FoodRatings
 import com.example.safefood.data.model.NutrientType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -104,19 +105,17 @@ class FoodCatalogParserTest {
     fun `every catalog entry has its own specific photo`() {
         val images = FoodImageCatalog.images
 
-        // 506 CSV-Zeilen, aber 502 Schluessel: Onion- und Bell-Pepper-Varianten
-        // (z. B. "Onion (Red)" / "Onion (White)") teilen sich denselben normalisierten Namen.
-        assertEquals("Der Katalog muss alle Lebensmittel abdecken", 502, images.size)
-        assertTrue(
-            "Alle Bilder muessen eingebettet oder HTTPS sein",
-            images.values.all {
-                it.startsWith("file:///android_asset/food_images/") || it.startsWith("https://")
-            }
+        // 506 CSV-Zeilen (502 Schluessel) plus 102 eigene Lebensmittel des Nutzers.
+        assertEquals("Der Katalog muss alle Lebensmittel abdecken", 604, images.size)
+        assertEquals(
+            "Alle Bilder muessen offline eingebettet sein",
+            604,
+            images.values.count { it.startsWith("file:///android_asset/food_images/") }
         )
         assertEquals(
-            "Alle Katalogbilder sollten offline eingebettet sein",
-            502,
-            images.values.count { it.startsWith("file:///android_asset/food_images/") }
+            "Fuer jede Kategorie gibt es ein neutrales Ersatzfoto",
+            6,
+            FoodImageCatalog.categoryFallbacks.size
         )
     }
 
@@ -126,5 +125,22 @@ class FoodCatalogParserTest {
 
         assertEquals(FoodImageCatalog.images[FoodImageResolver.normalize("Cheddar Cheese")], resolved)
         assertNotEquals(FoodImageResolver.urlFor("Feta Cheese", "Dairy"), resolved)
+    }
+
+    @Test
+    fun `resolver finds an offline photo for custom foods and never links to the internet`() {
+        // Selbst angelegte Namen, die genau im Zusatzkatalog liegen.
+        val cheddar = FoodImageResolver.urlFor("Cheddar", "Dairy")
+        assertEquals(FoodImageCatalog.images["cheddar"], cheddar)
+        assertTrue(cheddar.startsWith("file:///android_asset/food_images/"))
+
+        // Unbekannter Name: neutrales Kategorie-Foto statt externer URL.
+        val unknown = FoodImageResolver.urlFor("Zorblax Deluxe", "Fruits")
+        assertEquals(FoodImageCatalog.categoryFallbacks["fruits"], unknown)
+        assertFalse(unknown.startsWith("http"))
+
+        // Unscharfer Treffer: "Cherry Tomatoes" findet "cherry tomato".
+        val cherry = FoodImageResolver.urlFor("Cherry Tomatoes", "Vegetables")
+        assertEquals(FoodImageCatalog.images["cherry tomato"], cherry)
     }
 }

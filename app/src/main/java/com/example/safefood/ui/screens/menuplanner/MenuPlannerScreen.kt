@@ -277,6 +277,15 @@ fun MenuPlannerScreen(viewModel: SafeFoodViewModel) {
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        val unratedPotential = potentialMealFoods.count { it.rating == 0 }
+                        if (unratedPotential > 0) {
+                            Text(
+                                text = "$unratedPotential of these are not rated yet. " +
+                                    "Rate them in Categories or SafeFood to use them in a menu.",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
 
                     Button(

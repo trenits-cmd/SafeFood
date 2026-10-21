@@ -36,6 +36,14 @@
   * 🍊 **Vitamins & Minerals**: Micronutrients & immunity (*Tomatoes, Lettuce, Fresh Fruits, Vegetables*)
 * Visual macronutrient badges on food cards and educational banners.
 
+### 📦 Food Catalog (CSV) & Bild-Resolver
+* **500+ Lebensmittel** werden aus `app/src/main/assets/food_catalog.csv` eingelesen (`Food Catalog,Category` – 506 Einträge) statt fest im Code zu stehen.
+* Beim ersten Start wird der Katalog automatisch in **6 Kategorien** einsortiert und mit Makronutrient-Tags sowie **Saison-Hinweisen** (All Year / Spring / Summer / Autumn / Winter) angereichert.
+* **Stabile IDs** (`food_<slug>`) sorgen dafür, dass Ratings und Notizen auch nach einem Katalog-Update am selben Lebensmittel hängen bleiben.
+* **Eigenes Foto für jedes Lebensmittel**: Alle 506 Katalogeinträge haben ein konkretes Produktfoto (`FoodImageCatalog`, generiert aus Wikimedia Commons/Wikipedia, freie Lizenzen). Geladen wird per Coil mit Crossfade und ruhigem Platzhalter (`FoodThumbnail`), damit das Layout auch offline stabil bleibt.
+* **Bildnachweise** liegen vollständig in [`CREDITS.md`](CREDITS.md) und maschinenlesbar in `app/src/main/assets/food_image_credits.json`.
+* Eigene Kategorien und Lebensmittel lassen sich weiterhin jederzeit ergänzen, bearbeiten oder löschen.
+
 ### 🤖 AI Menu Planner
 * Generates personalized 1-day, 3-day, or 7-day safe meal plans using your highest rated comfort foods.
 * Customizable AI planning strategies:
@@ -79,10 +87,15 @@ com.example.safefood/
 ├── data/
 │   ├── model/
 │   │   └── FoodModels.kt          # FoodItem, Category, ShoppingItem, NutrientType, MealPlan
+│   ├── catalog/
+│   │   ├── FoodCatalogParser.kt   # CSV-Parser, Kategorie-/Nährwert-/Saison-Zuordnung
+│   │   └── FoodImageResolver.kt   # Bild-URL-Auflösung pro Lebensmittel (Coil)
 │   ├── repository/
 │   │   └── SafeFoodRepository.kt  # JSON persistent storage & StateFlow streams
 │   └── export/
 │       └── CsvExporter.kt         # CSV formatting & escape logic
+│   └── assets/
+│       └── food_catalog.csv       # Auslieferbarer Lebensmittelkatalog (500+ Einträge)
 ├── ai/
 │   └── AiMenuPlanner.kt           # AI meal plan generator & ingredient extraction engine
 ├── ui/
@@ -136,4 +149,9 @@ com.example.safefood/
 ---
 
 ## 📜 License
-Distributed under the MIT License. See `LICENSE` for more details.
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for more details.
+
+## 🖼️ Bildnachweise
+Die Lebensmittel-Fotos stammen aus Wikimedia Commons bzw. den Wikipedia-Artikeln und stehen
+unter freien Lizenzen (CC BY, CC BY-SA, CC0 oder Public Domain). Die vollständige Liste mit
+Quelle, Autor und Lizenz je Lebensmittel steht in [`CREDITS.md`](CREDITS.md).

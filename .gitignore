@@ -1,15 +1,33 @@
-*.iml
+# Gradle / Build
 .gradle
+/build
+build/
+/captures
+.externalNativeBuild
+.cxx
+.gradle/
+.kotlin/
+
+# Lokale Konfiguration (nicht auf GitHub)
 /local.properties
+local.properties
+
+# IDE
+*.iml
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+/.idea/shelf/
+
+# Build-Artefakte
+*.apk
+*.aab
+*.hprof
+*.iml
+
+# Betriebssystem
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
+Thumbs.db

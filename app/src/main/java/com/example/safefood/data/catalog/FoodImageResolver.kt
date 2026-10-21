@@ -1,31 +1,36 @@
 package com.example.safefood.data.catalog
 
-import kotlin.math.abs
-
 /**
- * Direct HTTPS image URLs for catalog items.
- * Exact Unsplash photos when we have a match; otherwise a category photo
- * chosen from a small set so nearby items are not identical.
+ * Liefert zu jedem Lebensmittel ein konkretes Foto.
+ *
+ * Reihenfolge der Aufloesung:
+ *  1. [FoodImageCatalog] - generierte, lebensmittelspezifische Fotos fuer alle 506 Katalogeintraege
+ *     (Quelle: Wikimedia Commons / Wikipedia, Lizenzangaben in `assets/food_image_credits.json`).
+ *  2. kuratierte Unsplash-Treffer fuer Namen, die nicht im Katalog stehen.
+ *  3. Kategorie-Pool, damit nie ein leeres Bild entsteht.
  */
 object FoodImageResolver {
 
     private const val FALLBACK =
-        "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60"
+        "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500&auto=format&fit=crop&q=60"
 
     fun urlFor(name: String, category: String): String {
         val key = normalize(name)
+
+        FoodImageCatalog.images[key]?.let { return it }
         exact[key]?.let { return it }
 
         val contained = exact.keys
             .filter { it.length >= 4 && (key.contains(it) || it.contains(key)) }
             .maxByOrNull { it.length }
-        if (contained != null) return exact[contained]!!
+        if (contained != null) return exact.getValue(contained)
 
         val pool = categoryPools[category.lowercase()] ?: genericPool
-        return pool[abs(key.hashCode()) % pool.size]
+        return pool[Math.floorMod(key.hashCode(), pool.size)]
     }
 
-    private fun normalize(name: String): String {
+    /** Normalisiert Namen so, dass Katalog, Fotos und Nutzereingaben zusammenfinden. */
+    fun normalize(name: String): String {
         return name.lowercase()
             .replace(Regex("\\(.*?\\)"), " ")
             .replace(Regex("[^a-z0-9\\s]"), " ")

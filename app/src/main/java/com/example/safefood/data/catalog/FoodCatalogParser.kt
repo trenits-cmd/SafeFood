@@ -22,23 +22,60 @@ object FoodCatalogParser {
     )
 
     fun parseCsv(csv: String): List<CatalogFoodRow> {
-        return csv.lineSequence()
+        return csv.removePrefix("\uFEFF")
+            .lineSequence()
             .map { it.trim() }
             .filter { it.isNotEmpty() }
-            .dropWhile { line ->
-                val header = line.lowercase()
-                header.startsWith("food item") || header.startsWith("name")
-            }
+            .filterNot { isHeaderLine(it) }
             .mapNotNull { line ->
-                val comma = line.indexOf(',')
-                if (comma <= 0 || comma == line.lastIndex) return@mapNotNull null
-                val name = line.substring(0, comma).trim().trim('"')
-                val category = line.substring(comma + 1).trim().trim('"')
+                val fields = splitCsvLine(line)
+                if (fields.size < 2) return@mapNotNull null
+                val name = fields[0].trim()
+                val category = fields[1].trim()
                 if (name.isEmpty() || category.isEmpty()) null
                 else CatalogFoodRow(name = name, categoryName = category)
             }
             .distinctBy { it.name.lowercase() }
             .toList()
+    }
+
+    private fun isHeaderLine(line: String): Boolean {
+        val lower = line.lowercase()
+        return lower.startsWith("food item") ||
+            lower.startsWith("name,") ||
+            lower.startsWith("name;") ||
+            lower.startsWith("name\t")
+    }
+
+    /**
+     * Zerlegt eine CSV-Zeile und respektiert dabei Anfuehrungszeichen,
+     * doppelte Anfuehrungszeichen als Escape und Kommas innerhalb von Feldern.
+     */
+    internal fun splitCsvLine(line: String): List<String> {
+        val fields = mutableListOf<String>()
+        val current = StringBuilder()
+        var inQuotes = false
+        var index = 0
+
+        while (index < line.length) {
+            val char = line[index]
+            when {
+                char == '"' && inQuotes && index + 1 < line.length && line[index + 1] == '"' -> {
+                    current.append('"')
+                    index++
+                }
+                char == '"' -> inQuotes = !inQuotes
+                char == ',' && !inQuotes -> {
+                    fields += current.toString()
+                    current.clear()
+                }
+                else -> current.append(char)
+            }
+            index++
+        }
+        fields += current.toString()
+
+        return fields.map { it.trim() }
     }
 
     fun toFoodItems(

@@ -70,6 +70,7 @@ import com.example.safefood.data.model.FoodCategory
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.data.model.NutrientType
 import com.example.safefood.ui.SafeFoodViewModel
+import com.example.safefood.ui.components.FoodThumbnail
 import com.example.safefood.ui.components.StarRatingBar
 import com.example.safefood.ui.screens.nutrients.NutrientBadgeChip
 import java.text.SimpleDateFormat
@@ -406,13 +407,10 @@ fun FoodItemCard(
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            coil.compose.AsyncImage(
-                model = food.imageUrl.ifBlank { "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500&auto=format&fit=crop&q=60" },
-                contentDescription = food.name,
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            FoodThumbnail(
+                food = food,
+                size = 42.dp,
+                cornerRadius = 8.dp
             )
 
             Spacer(modifier = Modifier.width(10.dp))

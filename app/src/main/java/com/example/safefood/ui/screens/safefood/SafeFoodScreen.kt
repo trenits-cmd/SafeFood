@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.ui.SafeFoodViewModel
 import com.example.safefood.ui.screens.nutrients.NutrientBadgeChip
+import com.example.safefood.ui.components.FoodThumbnail
 import com.example.safefood.ui.components.StarRatingBar
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -250,13 +252,10 @@ fun SafeFoodHighlightCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                coil.compose.AsyncImage(
-                    model = food.imageUrl.ifBlank { "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500&auto=format&fit=crop&q=60" },
-                    contentDescription = food.name,
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(RoundedCornerShape(10.dp)),
-                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                FoodThumbnail(
+                    food = food,
+                    size = 52.dp,
+                    cornerRadius = 10.dp
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {

@@ -44,6 +44,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.safefood.ui.SafeFoodViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun ExportScreen(viewModel: SafeFoodViewModel) {
@@ -145,7 +148,9 @@ fun ExportScreen(viewModel: SafeFoodViewModel) {
             Button(
                 onClick = {
                     val title = if (selectedExportType == 0) "SafeFood Ratings CSV" else "SafeFood Shopping List CSV"
-                    viewModel.shareCsvData(context, csvText, title)
+                    val stamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.US).format(Date())
+                    val baseName = if (selectedExportType == 0) "safefood_ratings" else "safefood_shopping_list"
+                    viewModel.shareCsvData(context, csvText, title, "${baseName}_$stamp.csv")
                 },
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier

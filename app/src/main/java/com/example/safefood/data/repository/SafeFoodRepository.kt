@@ -318,7 +318,7 @@ class SafeFoodRepository(private val context: Context) {
     }
 
     companion object {
-        const val CATALOG_VERSION = 2
+        const val CATALOG_VERSION = 3
         private const val CATALOG_ASSET = "food_catalog.csv"
         private const val FIVE_DAYS_MS = 5L * 24 * 60 * 60 * 1000L
     }

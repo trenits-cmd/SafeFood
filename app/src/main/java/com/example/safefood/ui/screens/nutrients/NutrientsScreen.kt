@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.data.model.NutrientType
 import com.example.safefood.ui.SafeFoodViewModel
+import com.example.safefood.ui.components.FoodThumbnail
 import com.example.safefood.ui.components.StarRatingBar
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -60,7 +61,8 @@ import com.example.safefood.ui.components.StarRatingBar
 fun NutrientsScreen(viewModel: SafeFoodViewModel) {
     val foods by viewModel.foods.collectAsState()
     val categories by viewModel.categories.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
+
+    var searchQuery by remember { mutableStateOf("") }
 
     var selectedNutrientFilter by remember { mutableStateOf<NutrientType?>(null) } // null = All
     val categoryMap = remember(categories) { categories.associate { it.id to it.name } }
@@ -85,7 +87,7 @@ fun NutrientsScreen(viewModel: SafeFoodViewModel) {
         // Search Bar
         OutlinedTextField(
             value = searchQuery,
-            onValueChange = { viewModel.setSearchQuery(it) },
+            onValueChange = { searchQuery = it },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Search ingredients by nutrient...") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
@@ -226,13 +228,10 @@ fun NutrientFoodCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                coil.compose.AsyncImage(
-                    model = food.imageUrl.ifBlank { "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500&auto=format&fit=crop&q=60" },
-                    contentDescription = food.name,
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(RoundedCornerShape(10.dp)),
-                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                FoodThumbnail(
+                    food = food,
+                    size = 52.dp,
+                    cornerRadius = 10.dp
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {

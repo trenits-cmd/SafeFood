@@ -81,7 +81,7 @@ import java.util.Locale
 fun CategoriesScreen(viewModel: SafeFoodViewModel) {
     val categories by viewModel.categories.collectAsState()
     val foods by viewModel.foods.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
+    var searchQuery by remember { mutableStateOf("") }
 
     var selectedSubTabCategoryId by remember { mutableStateOf<String?>(null) } // null = All Food Groups
     var showAddCategoryDialog by remember { mutableStateOf(false) }
@@ -110,7 +110,7 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
             ) {
                 OutlinedTextField(
                     value = searchQuery,
-                    onValueChange = { viewModel.setSearchQuery(it) },
+                    onValueChange = { searchQuery = it },
                     modifier = Modifier.weight(1f),
                     placeholder = { Text("Search safe ingredients...") },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
@@ -131,7 +131,7 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                     onClick = { viewModel.startRandomRating() },
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("🎲 Rate")
+                    Text("Rate")
                 }
             }
 
@@ -150,7 +150,7 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                     Tab(
                         selected = selectedSeasonFilter == season,
                         onClick = { viewModel.setSeasonFilter(season) },
-                        text = { Text("🌱 $season", fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+                        text = { Text(season, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
                     )
                 }
             }
@@ -196,11 +196,12 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(filteredCategories, key = { it.id }) { category ->
+                    filteredCategories.forEach { category ->
                         val categoryFoods = foods.filter { it.categoryId == category.id }
                             .filter { searchQuery.isBlank() || it.name.contains(searchQuery, ignoreCase = true) || it.notes.contains(searchQuery, ignoreCase = true) }
                             .filter { selectedSeasonFilter == "All Seasons" || it.season.equals(selectedSeasonFilter, ignoreCase = true) }
 
+                        item(key = "header-${category.id}") {
                         val rotationAngle by animateFloatAsState(
                             targetValue = if (category.isExpanded) 180f else 0f,
                             label = "expandRotation"
@@ -283,40 +284,30 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                                     }
                                 }
 
-                                // Foldable / Expandable Food Items List
-                                AnimatedVisibility(
-                                    visible = category.isExpanded,
-                                    enter = expandVertically() + fadeIn(),
-                                    exit = shrinkVertically() + fadeOut()
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 12.dp)
-                                            .padding(bottom = 12.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        if (categoryFoods.isEmpty()) {
-                                            Text(
-                                                text = "No food items in this group yet.",
-                                                fontSize = 13.sp,
-                                                color = Color.Gray,
-                                                modifier = Modifier.padding(12.dp)
-                                            )
-                                        } else {
-                                            categoryFoods.forEach { food ->
-                                                FoodItemCard(
-                                                    food = food,
-                                                    dateFormat = dateFormat,
-                                                    onRatingChanged = { newRating ->
-                                                        viewModel.rateFood(food.id, newRating)
-                                                    },
-                                                    onEdit = { foodToEdit = food },
-                                                    onDelete = { viewModel.deleteFoodItem(food.id) }
-                                                )
-                                            }
-                                        }
-                                    }
+                            }
+                        }
+                        }
+                        if (category.isExpanded) {
+                            if (categoryFoods.isEmpty()) {
+                                item(key = "empty-${category.id}") {
+                                    Text(
+                                        text = "No food items in this group yet.",
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                    )
+                                }
+                            } else {
+                                items(categoryFoods, key = { it.id }) { food ->
+                                    FoodItemCard(
+                                        food = food,
+                                        dateFormat = dateFormat,
+                                        onRatingChanged = { newRating ->
+                                            viewModel.rateFood(food.id, newRating)
+                                        },
+                                        onEdit = { foodToEdit = food },
+                                        onDelete = { viewModel.deleteFoodItem(food.id) }
+                                    )
                                 }
                             }
                         }

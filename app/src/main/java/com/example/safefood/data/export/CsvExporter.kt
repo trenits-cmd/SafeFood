@@ -9,16 +9,14 @@ import java.util.Locale
 
 object CsvExporter {
 
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-
     fun exportFoodsToCsv(
         foods: List<FoodItem>,
         categories: List<FoodCategory>
     ): String {
         val categoryMap = categories.associate { it.id to it.name }
         val sb = StringBuilder()
-        
-        // Header
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+
         sb.append("ID,Food Name,Category,Rating (1-5),Last Rated Date,Notes,Nutrients\n")
 
         for (food in foods) {

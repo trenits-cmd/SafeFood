@@ -17,6 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -35,11 +39,11 @@ fun getRatingEmoji(rating: Int): String {
 
 fun getRatingLabel(rating: Int): String {
     return when (rating) {
-        5 -> "5 Stars: Yummy! (Safe Favorite)"
-        4 -> "4 Stars: Good (Safe Option)"
-        3 -> "3 Stars: Okay (Neutral)"
-        2 -> "2 Stars: Unsure (Borderline)"
-        1 -> "1 Star: Yucky (Not Safe / Disliked)"
+        5 -> "5 stars: Yummy (safe favorite)"
+        4 -> "4 stars: Good (safe option)"
+        3 -> "3 stars: Okay (neutral)"
+        2 -> "2 stars: Unsure (borderline)"
+        1 -> "1 star: Yucky (not safe)"
         else -> "Unrated"
     }
 }
@@ -80,6 +84,10 @@ fun StarRatingBar(
                     tint = tint,
                     modifier = Modifier
                         .size(starSize)
+                        .semantics {
+                            contentDescription = "$starIndex star"
+                            role = Role.Button
+                        }
                         .then(
                             if (!readOnly) {
                                 Modifier.clickable {

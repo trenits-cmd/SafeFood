@@ -3,25 +3,30 @@ package com.example.safefood.ui
 import android.app.Application
 import android.content.Context
 import android.content.Intent
+import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.safefood.ai.AiMenuPlanner
 import com.example.safefood.data.export.CsvExporter
 import com.example.safefood.data.model.FoodCategory
 import com.example.safefood.data.model.FoodItem
+import com.example.safefood.data.model.FoodRatings
 import com.example.safefood.data.model.MealPlan
 import com.example.safefood.data.model.MealPlanDay
 import com.example.safefood.data.model.NutrientType
 import com.example.safefood.data.model.ShoppingItem
 import com.example.safefood.data.model.ShoppingItemStatus
 import com.example.safefood.data.repository.SafeFoodRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 class SafeFoodViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -31,9 +36,6 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
     val foods: StateFlow<List<FoodItem>> = repository.foods
     val shoppingList: StateFlow<List<ShoppingItem>> = repository.shoppingList
     val mealPlans: StateFlow<List<MealPlan>> = repository.mealPlans
-
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
     private val _selectedSeasonFilter = MutableStateFlow("All Seasons")
     val selectedSeasonFilter: StateFlow<String> = _selectedSeasonFilter.asStateFlow()
@@ -45,21 +47,20 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
     private val _snackbarMessage = MutableStateFlow<String?>(null)
     val snackbarMessage: StateFlow<String?> = _snackbarMessage.asStateFlow()
 
-    // Safe Food Tab filtered state: Good (4) or Yummy (5) and recently rated
-    val bestRatedFoods: StateFlow<List<FoodItem>> = combine(foods, _searchQuery) { foodList, query ->
-        foodList
-            .filter { it.rating >= 4 }
-            .filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.notes.contains(query, ignoreCase = true) }
-            .sortedByDescending { it.rating }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val bestRatedFoods: StateFlow<List<FoodItem>> = foods
+        .map { foodList ->
+            foodList.filter { FoodRatings.isSafe(it.rating) }.sortedByDescending { it.rating }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val recentlyRatedFoods: StateFlow<List<FoodItem>> = combine(foods, _searchQuery) { foodList, query ->
-        foodList
-            .filter { it.lastRatedTimestamp != null && it.lastRatedTimestamp > 0 }
-            .filter { query.isBlank() || it.name.contains(query, ignoreCase = true) }
-            .sortedByDescending { it.lastRatedTimestamp ?: 0L }
-            .take(10)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val recentlyRatedFoods: StateFlow<List<FoodItem>> = foods
+        .map { foodList ->
+            foodList
+                .filter { it.lastRatedTimestamp != null && it.lastRatedTimestamp > 0 }
+                .sortedByDescending { it.lastRatedTimestamp ?: 0L }
+                .take(10)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _showStartupRatePrompt = MutableStateFlow(false)
     val showStartupRatePrompt: StateFlow<Boolean> = _showStartupRatePrompt.asStateFlow()
@@ -67,17 +68,20 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
     private val _activeRandomFood = MutableStateFlow<FoodItem?>(null)
     val activeRandomFood: StateFlow<FoodItem?> = _activeRandomFood.asStateFlow()
 
+    private val _isGeneratingPlan = MutableStateFlow(false)
+    val isGeneratingPlan: StateFlow<Boolean> = _isGeneratingPlan.asStateFlow()
+
     init {
         viewModelScope.launch {
-            repository.loadData()
-            if (repository.hasFoodsNeedingRating()) {
-                _showStartupRatePrompt.value = true
+            try {
+                repository.loadData()
+                if (repository.hasFoodsDueForReRate()) {
+                    _showStartupRatePrompt.value = true
+                }
+            } catch (e: Exception) {
+                showMessage(e.message ?: "Could not load saved foods")
             }
         }
-    }
-
-    fun setSearchQuery(query: String) {
-        _searchQuery.value = query
     }
 
     fun clearSnackbar() {
@@ -88,40 +92,35 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
         _snackbarMessage.value = msg
     }
 
-    // --- Fold/Unfold & Category ---
-    fun toggleCategoryExpanded(categoryId: String) {
+    private fun runRepo(successMessage: String? = null, block: suspend () -> Unit) {
         viewModelScope.launch {
-            repository.toggleCategoryExpanded(categoryId)
+            try {
+                block()
+                if (successMessage != null) showMessage(successMessage)
+            } catch (e: Exception) {
+                showMessage(e.message ?: "Save failed")
+            }
         }
+    }
+
+    fun toggleCategoryExpanded(categoryId: String) {
+        runRepo { repository.toggleCategoryExpanded(categoryId) }
     }
 
     fun addCategory(name: String, description: String = "") {
         if (name.isBlank()) return
-        viewModelScope.launch {
+        runRepo("Category '${name.trim()}' created") {
             repository.addCategory(name.trim(), description.trim())
-            showMessage("Category '$name' created")
         }
     }
 
     fun deleteCategory(categoryId: String) {
-        viewModelScope.launch {
-            repository.deleteCategory(categoryId)
-            showMessage("Category removed")
-        }
+        runRepo("Category removed") { repository.deleteCategory(categoryId) }
     }
 
-    // --- Ratings & Food Actions ---
     fun rateFood(foodId: String, newRating: Int) {
-        viewModelScope.launch {
+        runRepo("Preference updated to ${FoodRatings.label(newRating)}") {
             repository.rateFood(foodId, newRating)
-            val prefText = when (newRating) {
-                4 -> "Love ❤️"
-                3 -> "Like 👍"
-                2 -> "Neutral 😐"
-                1 -> "Dislike 👎"
-                else -> "Unrated"
-            }
-            showMessage("Preference updated to $prefText")
         }
     }
 
@@ -131,9 +130,10 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
 
     fun startRandomRating() {
         _showStartupRatePrompt.value = false
-        _activeRandomFood.value = repository.getEligibleRandomFood()
+        val currentId = _activeRandomFood.value?.id
+        _activeRandomFood.value = repository.getEligibleRandomFood(excludeId = currentId)
         if (_activeRandomFood.value == null) {
-            showMessage("All foods have been rated recently!")
+            showMessage("All foods have been rated recently")
         }
     }
 
@@ -143,19 +143,16 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
 
     fun rateRandomFoodAndNext(foodId: String, newRating: Int) {
         viewModelScope.launch {
-            repository.rateFood(foodId, newRating)
-            val prefText = when (newRating) {
-                4 -> "Love ❤️"
-                3 -> "Like 👍"
-                2 -> "Neutral 😐"
-                1 -> "Dislike 👎"
-                else -> "Unrated"
-            }
-            showMessage("Rated food as $prefText")
-            val next = repository.getEligibleRandomFood()
-            _activeRandomFood.value = next
-            if (next == null) {
-                showMessage("Great job! All foods have been reviewed.")
+            try {
+                repository.rateFood(foodId, newRating)
+                showMessage("Rated as ${FoodRatings.label(newRating)}")
+                val next = repository.getEligibleRandomFood(excludeId = foodId)
+                _activeRandomFood.value = next
+                if (next == null) {
+                    showMessage("Great job. All due foods have been reviewed.")
+                }
+            } catch (e: Exception) {
+                showMessage(e.message ?: "Save failed")
             }
         }
     }
@@ -165,80 +162,74 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
         name: String,
         notes: String = "",
         nutrientTags: List<NutrientType> = emptyList(),
-        initialRating: Int = 0
+        initialRating: Int = FoodRatings.UNRATED
     ) {
         if (name.isBlank()) return
-        viewModelScope.launch {
+        runRepo("Food item '${name.trim()}' added") {
             repository.addFoodItem(categoryId, name.trim(), notes.trim(), nutrientTags, initialRating)
-            showMessage("Food item '$name' added")
         }
     }
 
     fun updateFoodItem(item: FoodItem) {
-        viewModelScope.launch {
-            repository.updateFoodItem(item)
-            showMessage("Food item updated")
-        }
+        runRepo("Food item updated") { repository.updateFoodItem(item) }
     }
 
     fun deleteFoodItem(foodId: String) {
-        viewModelScope.launch {
-            repository.deleteFoodItem(foodId)
-            showMessage("Food item deleted")
-        }
+        runRepo("Food item deleted") { repository.deleteFoodItem(foodId) }
     }
 
-    // --- Shopping List Actions ---
     fun updateShoppingStatus(itemId: String, newStatus: ShoppingItemStatus) {
-        viewModelScope.launch {
-            repository.updateShoppingStatus(itemId, newStatus)
-        }
+        runRepo { repository.updateShoppingStatus(itemId, newStatus) }
     }
 
     fun addShoppingItem(name: String, category: String = "General") {
         if (name.isBlank()) return
-        viewModelScope.launch {
+        runRepo("Added '${name.trim()}' to shopping list") {
             repository.addShoppingItem(name.trim(), category)
-            showMessage("Added '$name' to shopping list")
         }
     }
 
     fun deleteShoppingItem(itemId: String) {
-        viewModelScope.launch {
-            repository.deleteShoppingItem(itemId)
-        }
+        runRepo { repository.deleteShoppingItem(itemId) }
     }
 
     fun clearCompletedShoppingItems() {
-        viewModelScope.launch {
-            repository.clearCompletedShoppingItems()
-            showMessage("Cleared checked items")
-        }
+        runRepo("Cleared checked items") { repository.clearCompletedShoppingItems() }
     }
 
-    // --- AI Menu Planner ---
     fun generateAiMealPlan(
         goal: AiMenuPlanner.PlanningGoal = AiMenuPlanner.PlanningGoal.SAFE_ONLY,
         customInstructions: String = "",
         daysCount: Int = 3
     ) {
         viewModelScope.launch {
-            val allFoods = foods.value
-            val generated = AiMenuPlanner.generateMealPlan(allFoods, goal, customInstructions, daysCount)
-            repository.saveMealPlan(generated)
-            showMessage("New AI Menu Plan created (${generated.days.size} days)")
+            _isGeneratingPlan.value = true
+            try {
+                val generated = withContext(Dispatchers.Default) {
+                    AiMenuPlanner.generateMealPlan(foods.value, goal, customInstructions, daysCount)
+                }
+                repository.saveMealPlan(generated)
+                showMessage("Menu plan created (${generated.days.size} days)")
+            } catch (e: Exception) {
+                showMessage(e.message ?: "Could not create menu plan")
+            } finally {
+                _isGeneratingPlan.value = false
+            }
         }
+    }
+
+    fun deleteMealPlan(planId: String) {
+        runRepo("Meal plan deleted") { repository.deleteMealPlan(planId) }
     }
 
     fun addDayIngredientsToShoppingList(day: MealPlanDay) {
-        viewModelScope.launch {
+        runRepo {
             val ingredients = AiMenuPlanner.extractIngredientsFromDay(day)
             repository.addIngredientsToShoppingList(ingredients, sourceMeal = day.dayName)
-            showMessage("Added ${ingredients.size} ingredients to Shopping List")
+            showMessage("Added ${ingredients.size} ingredients to shopping list")
         }
     }
 
-    // --- CSV Export ---
     fun getFoodsCsvText(): String {
         return CsvExporter.exportFoodsToCsv(foods.value, categories.value)
     }
@@ -247,13 +238,29 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
         return CsvExporter.exportShoppingListToCsv(shoppingList.value)
     }
 
-    fun shareCsvData(context: Context, csvText: String, title: String) {
-        val sendIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_TEXT, csvText)
-            type = "text/csv"
+    fun shareCsvData(context: Context, csvText: String, title: String, fileName: String) {
+        viewModelScope.launch {
+            try {
+                val uri = withContext(Dispatchers.IO) {
+                    val exportDir = File(context.cacheDir, "exports").apply { mkdirs() }
+                    val file = File(exportDir, fileName)
+                    file.writeText(csvText)
+                    FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        file
+                    )
+                }
+                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/csv"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_SUBJECT, title)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(Intent.createChooser(sendIntent, title))
+            } catch (e: Exception) {
+                showMessage(e.message ?: "Could not share CSV")
+            }
         }
-        val shareIntent = Intent.createChooser(sendIntent, title)
-        context.startActivity(shareIntent)
     }
 }

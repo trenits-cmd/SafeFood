@@ -1,0 +1,507 @@
+Food Item,Category
+Whole Milk,Dairy
+Skim Milk,Dairy
+Cheddar Cheese,Dairy
+Mozzarella Cheese,Dairy
+Greek Yogurt,Dairy
+Butter,Dairy
+Heavy Cream,Dairy
+Sour Cream,Dairy
+Cottage Cheese,Dairy
+Parmesan Cheese,Dairy
+Swiss Cheese,Dairy
+Gouda Cheese,Dairy
+Brie Cheese,Dairy
+Camembert,Dairy
+Provolone Cheese,Dairy
+Feta Cheese,Dairy
+Ricotta Cheese,Dairy
+Paneer,Dairy
+Ghee,Dairy
+Cream Cheese,Dairy
+Kefir,Dairy
+Buttermilk,Dairy
+Condensed Milk,Dairy
+Evaporated Milk,Dairy
+Mascarpone,Dairy
+Quark,Dairy
+Roquefort Cheese,Dairy
+Blue Cheese,Dairy
+Monterey Jack Cheese,Dairy
+Colby Cheese,Dairy
+Halloumi,Dairy
+Edam Cheese,Dairy
+Havarti Cheese,Dairy
+Muenster Cheese,Dairy
+Gruyère Cheese,Dairy
+Emmental Cheese,Dairy
+Manchego Cheese,Dairy
+Stracciatella,Dairy
+Burrata,Dairy
+Clotted Cream,Dairy
+Frozen Yogurt,Dairy
+Ice Cream,Dairy
+Whipped Cream,Dairy
+Milk Powder,Dairy
+Whey Protein,Dairy
+Goat Milk,Dairy
+Sheep Milk,Dairy
+Goat Cheese,Dairy
+Pecorino Cheese,Dairy
+Asiago Cheese,Dairy
+Fontina Cheese,Dairy
+Neufchâtel Cheese,Dairy
+Queso Blanco,Dairy
+Queso Fresco,Dairy
+Cotija Cheese,Dairy
+String Cheese,Dairy
+Limburger Cheese,Dairy
+Taleggio Cheese,Dairy
+Gorgonzola Cheese,Dairy
+Derby Cheese,Dairy
+Red Leicester Cheese,Dairy
+Double Gloucester,Dairy
+Wensleydale Cheese,Dairy
+Dubliner Cheese,Dairy
+Raclette Cheese,Dairy
+Reblochon,Dairy
+Comté Cheese,Dairy
+Beaufort Cheese,Dairy
+Morbier Cheese,Dairy
+Époisses Cheese,Dairy
+Vacherin Cheese,Dairy
+Saint-Nectaire,Dairy
+Pont-l'Évêque,Dairy
+Maroilles,Dairy
+Bresse Bleu,Dairy
+Cabrales Cheese,Dairy
+Ibores Cheese,Dairy
+Zamorano Cheese,Dairy
+Majorero Cheese,Dairy
+Roncal Cheese,Dairy
+Provolone Piccante,Dairy
+Queso Oaxaca,Dairy
+Labneh,Dairy
+Clabber,Dairy
+Skyr,Dairy
+Ayran,Dairy
+Lassi,Dairy
+Paneer Tikka,Dairy
+A2 Milk,Dairy
+Ultra-Filtered Milk,Dairy
+Clotted Cream Fudge,Dairy
+Kefir Cheese,Dairy
+Dry Curd Cottage Cheese,Dairy
+Farmer Cheese,Dairy
+Panela Cheese,Dairy
+Gorgonzola Dolce,Dairy
+Ricotta Salata,Dairy
+Pecorino Romano,Dairy
+Caciocavallo,Dairy
+Apple,Fruits
+Banana,Fruits
+Orange,Fruits
+Strawberry,Fruits
+Blueberry,Fruits
+Raspberry,Fruits
+Blackberry,Fruits
+Pineapple,Fruits
+Mango,Fruits
+Papaya,Fruits
+Peach,Fruits
+Nectarine,Fruits
+Plum,Fruits
+Apricot,Fruits
+Cherry,Fruits
+Grape,Fruits
+Watermelon,Fruits
+Cantaloupe,Fruits
+Honeydew Melon,Fruits
+Kiwi,Fruits
+Lemon,Fruits
+Lime,Fruits
+Grapefruit,Fruits
+Pomegranate,Fruits
+Fig,Fruits
+Date,Fruits
+Passion Fruit,Fruits
+Dragon Fruit,Fruits
+Guava,Fruits
+Lychee,Fruits
+Persimmon,Fruits
+Cranberry,Fruits
+Gooseberry,Fruits
+Elderberry,Fruits
+Mulberry,Fruits
+Boysenberry,Fruits
+Starfruit,Fruits
+Rambutan,Fruits
+Durian,Fruits
+Mangosteen,Fruits
+Jackfruit,Fruits
+Tangerine,Fruits
+Clementine,Fruits
+Mandarin Orange,Fruits
+Kumquat,Fruits
+Sapodilla,Fruits
+Soursop,Fruits
+Cherimoya,Fruits
+Feijoa,Fruits
+Loquat,Fruits
+Breadfruit,Fruits
+Ackee,Fruits
+Miracle Fruit,Fruits
+Prune,Fruits
+Raisin,Fruits
+Dried Apricot,Fruits
+Dried Fig,Fruits
+Goji Berry,Fruits
+Acai Berry,Fruits
+Barberry,Fruits
+Sea Buckthorn,Fruits
+Cloudberry,Fruits
+Lingonberry,Fruits
+Salak (Snake Fruit),Fruits
+Longan,Fruits
+Jabuticaba,Fruits
+Santol,Fruits
+Langsat,Fruits
+Marang,Fruits
+Pitomba,Fruits
+Carambola,Fruits
+Black Currant,Fruits
+Red Currant,Fruits
+White Currant,Fruits
+Jostaberry,Fruits
+Salmonberry,Fruits
+Thimbleberry,Fruits
+Wineberry,Fruits
+Buffaloberry,Fruits
+Chokeberry,Fruits
+Juneberry,Fruits
+Wax Apple,Fruits
+Malay Apple,Fruits
+Water Apple,Fruits
+Governor's Plum,Fruits
+Natal Plum,Fruits
+Surinam Cherry,Fruits
+Barbados Cherry,Fruits
+Illawarra Plum,Fruits
+Kakadu Plum,Fruits
+Davidson's Plum,Fruits
+Riberry,Fruits
+Finger Lime,Fruits
+Desert Lime,Fruits
+Round Lime,Fruits
+Kaffir Lime,Fruits
+Calabash,Fruits
+Monkey Fruit,Fruits
+Wood Apple,Fruits
+Bael,Fruits
+Elephant Apple,Fruits
+Lentils,Legumes
+Red Lentils,Legumes
+Green Lentils,Legumes
+Black Lentils (Beluga),Legumes
+Yellow Lentils,Legumes
+Chickpeas (Garbanzo Beans),Legumes
+Black Beans,Legumes
+Kidney Beans,Legumes
+Pinto Beans,Legumes
+Navy Beans,Legumes
+Cannellini Beans,Legumes
+Lima Beans,Legumes
+Soybeans,Legumes
+Edamame,Legumes
+Peanuts,Legumes
+Green Peas,Legumes
+Split Peas,Legumes
+Black-eyed Peas,Legumes
+Fava Beans (Broad Beans),Legumes
+Adzuki Beans,Legumes
+Mung Beans,Legumes
+Anasazi Beans,Legumes
+Cranberry Beans (Borlotti),Legumes
+Great Northern Beans,Legumes
+Flageolet Beans,Legumes
+Marrowfat Peas,Legumes
+Pigeon Peas,Legumes
+Bambara Groundnut,Legumes
+Winged Beans,Legumes
+Hyacinth Beans,Legumes
+Lupini Beans,Legumes
+Sword Beans,Legumes
+Tarwi Beans,Legumes
+Horse Gram,Legumes
+Moth Beans,Legumes
+Urad Dal,Legumes
+Toor Dal,Legumes
+Chana Dal,Legumes
+Moong Dal,Legumes
+Tofu,Legumes
+Tempeh,Legumes
+Natto,Legumes
+Soy Curls,Legumes
+Soy Milk,Legumes
+Peanut Butter,Legumes
+Hummus,Legumes
+Falafel,Legumes
+Lentil Flour,Legumes
+Chickpea Flour (Besan),Legumes
+Soy Flour,Legumes
+Lentil Pasta,Legumes
+Chickpea Pasta,Legumes
+Pea Protein,Legumes
+Carob,Legumes
+Mesquite Powder,Legumes
+Pea Beans,Legumes
+Yardlong Beans,Legumes
+Snap Peas,Legumes
+Snow Peas,Legumes
+Runner Beans,Legumes
+Cluster Beans (Guar),Legumes
+Lablab Beans,Legumes
+Rice Beans,Legumes
+Tepary Beans,Legumes
+Velvet Beans,Legumes
+Calypso Beans,Legumes
+Appaloosa Beans,Legumes
+Jacob's Cattle Beans,Legumes
+Orca Beans,Legumes
+Tongue of Fire Beans,Legumes
+Rattlesnake Beans,Legumes
+Scarlet Runner Beans,Legumes
+Yellow Eye Beans,Legumes
+Swedish Brown Beans,Legumes
+Vaquero Beans,Legumes
+Eye of the Tiger Beans,Legumes
+Snowcap Beans,Legumes
+Flambeau Beans,Legumes
+Soldier Beans,Legumes
+Steuben Yellow Eye Beans,Legumes
+Moth Dal,Legumes
+Black Gram,Legumes
+Green Gram,Legumes
+Horse Gram Dal,Legumes
+Val Beans,Legumes
+Toor Dal Whole,Legumes
+Moong Whole,Legumes
+Chana Whole,Legumes
+Kabuli Chana,Legumes
+Kala Chana,Legumes
+Chicken Breast,Meat
+Chicken Thigh,Meat
+Chicken Wing,Meat
+Chicken Drumstick,Meat
+Whole Chicken,Meat
+Turkey Breast,Meat
+Ground Turkey,Meat
+Duck Breast,Meat
+Goose,Meat
+Quail,Meat
+Pheasant,Meat
+Beef Steak,Meat
+Ribeye Steak,Meat
+Sirloin Steak,Meat
+Filet Mignon,Meat
+Ground Beef,Meat
+Beef Chuck Roast,Meat
+Beef Brisket,Meat
+Beef Short Ribs,Meat
+Beef Liver,Meat
+Pork Chop,Meat
+Pork Loin,Meat
+Pork Tenderloin,Meat
+Pork Belly,Meat
+Bacon,Meat
+Ham,Meat
+Prosciutto,Meat
+Salami,Meat
+Pepperoni,Meat
+Pork Sausage,Meat
+Lamb Chop,Meat
+Rack of Lamb,Meat
+Ground Lamb,Meat
+Lamb Shank,Meat
+Lamb Leg,Meat
+Veal Cutlet,Meat
+Veal Shank (Osso Buco),Meat
+Venison Steak,Meat
+Bison Meat,Meat
+Rabbit Meat,Meat
+Wild Boar,Meat
+Elk Meat,Meat
+Ostrich Meat,Meat
+Kangaroo Meat,Meat
+Alligator Meat,Meat
+Beef Heart,Meat
+Beef Tongue,Meat
+Beef Tripe,Meat
+Pork Shoulder,Meat
+Pork Ribs,Meat
+Chorizo,Meat
+Mortadella,Meat
+Pancetta,Meat
+Pastrami,Meat
+Corned Beef,Meat
+Beef Jerky,Meat
+Bresaola,Meat
+Capocollo,Meat
+Soppressata,Meat
+Bratwurst,Meat
+Kielbasa,Meat
+Andouille Sausage,Meat
+Blood Sausage,Meat
+Liverwurst,Meat
+Haggis,Meat
+Duck Confit,Meat
+Foie Gras,Meat
+Turkey Leg,Meat
+Venison Sausage,Meat
+Bison Burger,Meat
+Pork Trotters,Meat
+Beef Tail (Oxtail),Meat
+Lamb Brain,Meat
+Veal Sweetbreads,Meat
+Pork Lard,Meat
+Chicken Liver,Meat
+Turkey Bacon,Meat
+Canadian Bacon,Meat
+Speck,Meat
+Culatello,Meat
+Turkey Thigh,Meat
+Turkey Wing,Meat
+Pork Loin Roast,Meat
+Beef Top Round,Meat
+Beef Bottom Round,Meat
+Beef Flank Steak,Meat
+Beef Skirt Steak,Meat
+Beef Hanger Steak,Meat
+Beef Flat Iron Steak,Meat
+Pork Shoulder Butt,Meat
+Broccoli,Vegetables
+Cauliflower,Vegetables
+Spinach,Vegetables
+Kale,Vegetables
+Swiss Chard,Vegetables
+Arugula,Vegetables
+Romaine Lettuce,Vegetables
+Iceberg Lettuce,Vegetables
+Butterhead Lettuce,Vegetables
+Radicchio,Vegetables
+Endive,Vegetables
+Cabbage,Vegetables
+Red Cabbage,Vegetables
+Napa Cabbage,Vegetables
+Bok Choy,Vegetables
+Brussels Sprouts,Vegetables
+Kohlrabi,Vegetables
+Asparagus,Vegetables
+Artichoke,Vegetables
+Celery,Vegetables
+Cucumber,Vegetables
+Zucchini,Vegetables
+Yellow Squash,Vegetables
+Eggplant,Vegetables
+Bell Pepper (Red),Vegetables
+Bell Pepper (Green),Vegetables
+Bell Pepper (Yellow),Vegetables
+Jalapeño Pepper,Vegetables
+Habanero Pepper,Vegetables
+Serrano Pepper,Vegetables
+Tomato,Vegetables
+Cherry Tomato,Vegetables
+Roma Tomato,Vegetables
+Tomatillo,Vegetables
+Carrot,Vegetables
+Radish,Vegetables
+Daikon Radish,Vegetables
+Turnip,Vegetables
+Rutabaga,Vegetables
+Beetroot,Vegetables
+Parsnip,Vegetables
+Celeriac (Celery Root),Vegetables
+Horseradish,Vegetables
+Garlic,Vegetables
+Onion (Yellow),Vegetables
+Onion (Red),Vegetables
+Onion (White),Vegetables
+Shallot,Vegetables
+Scallion (Green Onion),Vegetables
+Leek,Vegetables
+Chives,Vegetables
+Fennel,Vegetables
+Okra,Vegetables
+Bamboo Shoots,Vegetables
+Water Chestnut,Vegetables
+Bean Sprouts,Vegetables
+Lotus Root,Vegetables
+Jicama,Vegetables
+Cassava (Yuca),Vegetables
+Taro Root,Vegetables
+Yam,Vegetables
+Sweet Potato,Vegetables
+Russet Potato,Vegetables
+Red Potato,Vegetables
+Yukon Gold Potato,Vegetables
+Fingerling Potato,Vegetables
+Jerusalem Artichoke,Vegetables
+Pumpkin,Vegetables
+Butternut Squash,Vegetables
+Acorn Squash,Vegetables
+Spaghetti Squash,Vegetables
+Delicata Squash,Vegetables
+Kabocha Squash,Vegetables
+Chayote,Vegetables
+Bitter Gourd,Vegetables
+Ridge Gourd,Vegetables
+Bottle Gourd,Vegetables
+Snake Gourd,Vegetables
+Ivy Gourd,Vegetables
+Ash Gourd,Vegetables
+Watercress,Vegetables
+Dandelion Greens,Vegetables
+Mustard Greens,Vegetables
+Collard Greens,Vegetables
+Turnip Greens,Vegetables
+Beet Greens,Vegetables
+Purslane,Vegetables
+Sorrel,Vegetables
+Mallow,Vegetables
+Stinging Nettle,Vegetables
+White Rice,Carbohydrates
+Brown Rice,Carbohydrates
+Jasmine Rice,Carbohydrates
+Basmati Rice,Carbohydrates
+Wild Rice,Carbohydrates
+Arborio Rice,Carbohydrates
+Red Rice,Carbohydrates
+Black Rice (Forbidden Rice),Carbohydrates
+Rolled Oats,Carbohydrates
+Steel-Cut Oats,Carbohydrates
+Instant Oats,Carbohydrates
+Quinoa,Carbohydrates
+Couscous,Carbohydrates
+Bulgur,Carbohydrates
+Farro,Carbohydrates
+Barley,Carbohydrates
+Millet,Carbohydrates
+Buckwheat,Carbohydrates
+Sorghum,Carbohydrates
+Teff,Carbohydrates
+Amaranth,Carbohydrates
+Freekeh,Carbohydrates
+Polenta,Carbohydrates
+Cornmeal,Carbohydrates
+Gnocchi,Carbohydrates
+Spaghetti,Carbohydrates
+Penne,Carbohydrates
+Fettuccine,Carbohydrates
+Rigatoni,Carbohydrates
+Macaroni,Carbohydrates
+Linguine,Carbohydrates
+Lasagna Sheets,Carbohydrates
+Orzo,Carbohydrates
+Ramen Noodles,Carbohydrates
+Udon Noodles,Carbohydrates
+Soba Noodles,Carbohydrates

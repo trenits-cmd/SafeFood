@@ -61,7 +61,7 @@ fun SafeFoodScreen(viewModel: SafeFoodViewModel) {
     val recentlyRatedFoods by viewModel.recentlyRatedFoods.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val allFoods by viewModel.foods.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
+    var searchQuery by remember { mutableStateOf("") }
 
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val categoryMap = remember(categories) { categories.associate { it.id to it.name } }
@@ -103,7 +103,7 @@ fun SafeFoodScreen(viewModel: SafeFoodViewModel) {
         // Search Bar
         OutlinedTextField(
             value = searchQuery,
-            onValueChange = { viewModel.setSearchQuery(it) },
+            onValueChange = { searchQuery = it },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Search safe foods...") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },

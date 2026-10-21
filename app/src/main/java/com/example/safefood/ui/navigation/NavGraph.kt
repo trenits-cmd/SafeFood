@@ -7,7 +7,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.filled.Verified
@@ -52,7 +51,8 @@ import com.example.safefood.ui.screens.shopping.ShoppingListScreen
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     object Categories : Screen("categories", "Categories", Icons.Default.Category)
     object SafeFood : Screen("safe_food", "SafeFood", Icons.Default.Verified)
-    object AiMenu : Screen("ai_menu", "AI Menu", Icons.Default.AutoAwesome)
+    object Nutrients : Screen("nutrients", "Nutrients", Icons.Default.Spa)
+    object AiMenu : Screen("ai_menu", "Menu", Icons.Default.AutoAwesome)
     object Shopping : Screen("shopping", "Shopping", Icons.Default.ShoppingCart)
     object Export : Screen("export", "Export CSV", Icons.Default.FileDownload)
 }
@@ -77,6 +77,7 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
     val bottomNavItems = listOf(
         Screen.Categories,
         Screen.SafeFood,
+        Screen.Nutrients,
         Screen.AiMenu,
         Screen.Shopping
     )
@@ -141,8 +142,8 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
         if (showStartupRatePrompt) {
             AlertDialog(
                 onDismissRequest = { viewModel.dismissStartupRatePrompt() },
-                title = { Text("🌟 Food Preference Check-in") },
-                text = { Text("You have foods that haven't been reviewed in 5 days (or ever). Would you like to rate some foods now to help build your future menus?") },
+                title = { Text("Food preference check-in") },
+                text = { Text("Some foods you rated are older than 5 days. Want to quickly re-rate a few so menus stay accurate?") },
                 confirmButton = {
                     Button(onClick = { viewModel.startRandomRating() }) {
                         Text("Let's Rate!")
@@ -164,7 +165,7 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
 
             AlertDialog(
                 onDismissRequest = { viewModel.stopRandomRating() },
-                title = { Text("🎲 Quick Rate Food") },
+                title = { Text("Quick rate") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("Group: $categoryName", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
@@ -208,6 +209,9 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
             }
             composable(Screen.SafeFood.route) {
                 SafeFoodScreen(viewModel = viewModel)
+            }
+            composable(Screen.Nutrients.route) {
+                NutrientsScreen(viewModel = viewModel)
             }
             composable(Screen.AiMenu.route) {
                 MenuPlannerScreen(viewModel = viewModel)

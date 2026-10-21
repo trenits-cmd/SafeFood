@@ -12,16 +12,45 @@ enum class NutrientType(val displayName: String, val description: String) {
     VITAMINS_MINERALS("Vitamins & Minerals", "Immunity, vitality & overall wellness")
 }
 
+/**
+ * Single 5-star scale used everywhere (UI, persistence, planner, export).
+ * 0 = unrated, 1 = Yucky … 5 = Yummy. Safe foods are 4 and 5.
+ */
+object FoodRatings {
+    const val UNRATED = 0
+    const val YUCKY = 1
+    const val UNSURE = 2
+    const val OKAY = 3
+    const val GOOD = 4
+    const val YUMMY = 5
+    const val SAFE_MIN = GOOD
+
+    fun coerce(rating: Int): Int = if (rating <= 0) UNRATED else rating.coerceIn(YUCKY, YUMMY)
+
+    fun isSafe(rating: Int): Boolean = coerce(rating) >= SAFE_MIN
+
+    fun isUsableInBalancedPlan(rating: Int): Boolean = coerce(rating) >= OKAY
+
+    fun label(rating: Int): String = when (coerce(rating)) {
+        YUMMY -> "Yummy (safe favorite)"
+        GOOD -> "Good (safe option)"
+        OKAY -> "Okay (neutral)"
+        UNSURE -> "Unsure (borderline)"
+        YUCKY -> "Yucky (not safe)"
+        else -> "Unrated"
+    }
+}
+
 @Serializable
 data class FoodItem(
     val id: String = UUID.randomUUID().toString(),
     val categoryId: String,
     val name: String,
-    val rating: Int = 0, // 0 = unrated, 1..4 preferences
+    val rating: Int = FoodRatings.UNRATED,
     val lastRatedTimestamp: Long? = null,
     val notes: String = "",
     val nutrientTags: List<NutrientType> = emptyList(),
-    val season: String = "All Year", // Spring, Summer, Autumn, Winter, All Year
+    val season: String = "All Year",
     val imageUrl: String = ""
 )
 

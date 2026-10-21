@@ -45,10 +45,10 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
     private val _snackbarMessage = MutableStateFlow<String?>(null)
     val snackbarMessage: StateFlow<String?> = _snackbarMessage.asStateFlow()
 
-    // Safe Food Tab filtered state: Like (3) or Love (4) and recently rated
+    // Safe Food Tab filtered state: Good (4) or Yummy (5) and recently rated
     val bestRatedFoods: StateFlow<List<FoodItem>> = combine(foods, _searchQuery) { foodList, query ->
         foodList
-            .filter { it.rating >= 3 }
+            .filter { it.rating >= 4 }
             .filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.notes.contains(query, ignoreCase = true) }
             .sortedByDescending { it.rating }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

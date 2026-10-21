@@ -35,7 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.safefood.ui.components.EmojiPreferenceBar
+import com.example.safefood.ui.components.StarRatingBar
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -52,7 +52,6 @@ import com.example.safefood.ui.screens.shopping.ShoppingListScreen
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     object Categories : Screen("categories", "Categories", Icons.Default.Category)
     object SafeFood : Screen("safe_food", "SafeFood", Icons.Default.Verified)
-    object Nutrients : Screen("nutrients", "Nutrients", Icons.Default.Spa)
     object AiMenu : Screen("ai_menu", "AI Menu", Icons.Default.AutoAwesome)
     object Shopping : Screen("shopping", "Shopping", Icons.Default.ShoppingCart)
     object Export : Screen("export", "Export CSV", Icons.Default.FileDownload)
@@ -78,7 +77,6 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
     val bottomNavItems = listOf(
         Screen.Categories,
         Screen.SafeFood,
-        Screen.Nutrients,
         Screen.AiMenu,
         Screen.Shopping
     )
@@ -175,11 +173,13 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
                             Text(food.notes, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Text("Do you like this food?", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                        EmojiPreferenceBar(
+                        StarRatingBar(
                             rating = food.rating,
                             onRatingSelected = { newRating ->
                                 viewModel.rateRandomFoodAndNext(food.id, newRating)
-                            }
+                            },
+                            showLabel = true,
+                            starSize = 28.dp
                         )
                     }
                 },
@@ -208,9 +208,6 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
             }
             composable(Screen.SafeFood.route) {
                 SafeFoodScreen(viewModel = viewModel)
-            }
-            composable(Screen.Nutrients.route) {
-                NutrientsScreen(viewModel = viewModel)
             }
             composable(Screen.AiMenu.route) {
                 MenuPlannerScreen(viewModel = viewModel)

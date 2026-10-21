@@ -179,4 +179,4 @@ unter freien Lizenzen (CC BY, CC BY-SA, CC0 oder Public Domain). Die vollständi
 Quelle, Autor und Lizenz je Lebensmittel steht in [`CREDITS.md`](CREDITS.md).
 
 ## Download APK
-Download the latest debug APK from [GitHub Actions Artifacts](https://github.com/trenits-cmd/SafeFood/actions) or [Releases](https://github.com/trenits-cmd/SafeFood/releases). A GitHub Actions workflow builds `SafeFood-debug.apk` on every push to `main`.
+Download the latest debug APK directly from [GitHub Releases](https://github.com/trenits-cmd/SafeFood/releases/latest/download/SafeFood-debug.apk). The workflow also uploads every build as a `SafeFood-debug` artifact on the [Actions](https://github.com/trenits-cmd/SafeFood/actions) tab. A GitHub Actions workflow builds and publishes the APK on every push to `main`.

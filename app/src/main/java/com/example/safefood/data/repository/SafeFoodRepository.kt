@@ -237,6 +237,22 @@ class SafeFoodRepository(private val context: Context) {
         withContext(Dispatchers.IO) { saveFoodsToDisk(updated) }
     }
 
+    suspend fun setPotentialMeal(foodId: String, value: Boolean) = mutex.withLock {
+        if (_foods.value.none { it.id == foodId && it.isPotentialMeal != value }) return@withLock
+        val updated = _foods.value.map { food ->
+            if (food.id == foodId) food.copy(isPotentialMeal = value) else food
+        }
+        _foods.value = updated
+        withContext(Dispatchers.IO) { saveFoodsToDisk(updated) }
+    }
+
+    suspend fun clearPotentialMeals() = mutex.withLock {
+        if (_foods.value.none { it.isPotentialMeal }) return@withLock
+        val updated = _foods.value.map { if (it.isPotentialMeal) it.copy(isPotentialMeal = false) else it }
+        _foods.value = updated
+        withContext(Dispatchers.IO) { saveFoodsToDisk(updated) }
+    }
+
     suspend fun deleteFoodItem(foodId: String) = mutex.withLock {
         val updated = _foods.value.filter { it.id != foodId }
         _foods.value = updated
@@ -318,7 +334,7 @@ class SafeFoodRepository(private val context: Context) {
     }
 
     companion object {
-        const val CATALOG_VERSION = 3
+        const val CATALOG_VERSION = 4
         private const val CATALOG_ASSET = "food_catalog.csv"
         private const val FIVE_DAYS_MS = 5L * 24 * 60 * 60 * 1000L
     }

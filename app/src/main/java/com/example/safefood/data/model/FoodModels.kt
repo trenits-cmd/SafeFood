@@ -51,7 +51,9 @@ data class FoodItem(
     val notes: String = "",
     val nutrientTags: List<NutrientType> = emptyList(),
     val season: String = "All Year",
-    val imageUrl: String = ""
+    val imageUrl: String = "",
+    /** User marked this food as something they would like to turn into a meal. */
+    val isPotentialMeal: Boolean = false
 )
 
 @Serializable

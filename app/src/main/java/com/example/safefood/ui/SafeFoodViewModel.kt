@@ -44,6 +44,35 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
         _selectedSeasonFilter.value = season
     }
 
+    private val _selectedNutrientFilters = MutableStateFlow<Set<NutrientType>>(emptySet())
+    val selectedNutrientFilters: StateFlow<Set<NutrientType>> = _selectedNutrientFilters.asStateFlow()
+
+    fun toggleNutrientFilter(nutrient: NutrientType) {
+        _selectedNutrientFilters.value = _selectedNutrientFilters.value.let { current ->
+            if (nutrient in current) current - nutrient else current + nutrient
+        }
+    }
+
+    fun clearNutrientFilters() {
+        _selectedNutrientFilters.value = emptySet()
+    }
+
+    /** Foods the user marked as "potential meal" – collected in the AI Menu tab. */
+    val potentialMealFoods: StateFlow<List<FoodItem>> = foods
+        .map { foodList -> foodList.filter { it.isPotentialMeal }.sortedBy { it.name.lowercase() } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun togglePotentialMeal(foodId: String) {
+        val food = foods.value.find { it.id == foodId } ?: return
+        runRepo {
+            repository.setPotentialMeal(foodId, !food.isPotentialMeal)
+        }
+    }
+
+    fun clearPotentialMeals() {
+        runRepo("Potential meal selection cleared") { repository.clearPotentialMeals() }
+    }
+
     private val _snackbarMessage = MutableStateFlow<String?>(null)
     val snackbarMessage: StateFlow<String?> = _snackbarMessage.asStateFlow()
 
@@ -200,13 +229,23 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
     fun generateAiMealPlan(
         goal: AiMenuPlanner.PlanningGoal = AiMenuPlanner.PlanningGoal.SAFE_ONLY,
         customInstructions: String = "",
-        daysCount: Int = 3
+        daysCount: Int = 3,
+        usePotentialMealsOnly: Boolean = false
     ) {
         viewModelScope.launch {
             _isGeneratingPlan.value = true
             try {
+                val preferredIds = foods.value.filter { it.isPotentialMeal }.map { it.id }.toSet()
                 val generated = withContext(Dispatchers.Default) {
-                    AiMenuPlanner.generateMealPlan(foods.value, goal, customInstructions, daysCount)
+                    AiMenuPlanner.generateMealPlan(
+                        foods = foods.value,
+                        categories = categories.value,
+                        goal = goal,
+                        customInstructions = customInstructions,
+                        daysCount = daysCount,
+                        preferredIds = preferredIds,
+                        onlyPreferred = usePotentialMealsOnly
+                    )
                 }
                 repository.saveMealPlan(generated)
                 showMessage("Menu plan created (${generated.days.size} days)")

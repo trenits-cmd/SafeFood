@@ -27,25 +27,28 @@
 * Quick stats summary showing count of 100% safe verified foods.
 * Real-time search bar for quick lookup during anxious or overwhelming meal choices.
 
-### 🥗 Nutrients Tab (Macronutrient Classification)
-* Sort and filter foods by nutritional building blocks:
+### 🥗 Nutrient Filter (in Categories & SafeFood)
+* Filter both the Categories and SafeFood tabs by nutritional building blocks:
   * 🥩 **Proteins**: Growth, muscle repair & satiety (*Salmon, Chicken Breast, Eggs, Greek Yogurt, Cheddar Cheese*)
   * 🌾 **Fibers**: Digestive health & gut comfort (*Brown Rice, Lettuce, Tomatoes, Oatmeal, Lentils*)
   * 🥔 **Carbohydrates**: Primary energy fuel (*Brown Rice, Sweet Potato, White Rice, Spaghetti*)
   * 🥑 **Healthy Fats**: Brain health & nutrient absorption (*Salmon, Eggs, Whole Milk*)
   * 🍊 **Vitamins & Minerals**: Micronutrients & immunity (*Tomatoes, Lettuce, Fresh Fruits, Vegetables*)
-* Visual macronutrient badges on food cards and educational banners.
+* Multi-select chips (any selected nutrient matches) and a single-tap "All nutrients" reset. The selection is shared between both tabs.
+* Visual macronutrient badges remain on every food card.
 
 ### 📦 Food Catalog (CSV) & Bild-Resolver
 * **500+ Lebensmittel** werden aus `app/src/main/assets/food_catalog.csv` eingelesen (`Food Catalog,Category` – 506 Einträge) statt fest im Code zu stehen.
 * Beim ersten Start wird der Katalog automatisch in **6 Kategorien** einsortiert und mit Makronutrient-Tags sowie **Saison-Hinweisen** (All Year / Spring / Summer / Autumn / Winter) angereichert.
 * **Stabile IDs** (`food_<slug>`) sorgen dafür, dass Ratings und Notizen auch nach einem Katalog-Update am selben Lebensmittel hängen bleiben.
-* **Eigenes Foto für jedes Lebensmittel**: Alle 506 Katalogeinträge haben ein konkretes Produktfoto (`FoodImageCatalog`, generiert aus Wikimedia Commons/Wikipedia, freie Lizenzen). Geladen wird per Coil mit Crossfade und ruhigem Platzhalter (`FoodThumbnail`), damit das Layout auch offline stabil bleibt.
+* **Eigenes Foto für jedes Lebensmittel**: Alle 506 Katalogeinträge haben ein konkretes Foto (`FoodImageCatalog`). Die Bilder liegen als komprimierte JPEGs in `app/src/main/assets/food_images/` und werden **offline** ausgeliefert – kein Nachladen, keine fehlenden Kacheln, keine Hotlink-Probleme. Geladen wird per Coil mit Crossfade und ruhigem Platzhalter (`FoodThumbnail`).
+* **Ruhige, neutrale Motive**: Für Fleisch und heikle Zutaten werden zubereitete Gerichte statt roher Ware, Organe oder Verpackungen gezeigt; botanische Feld-/Blattfotos und Produktpackungen wurden ersetzt. Das reduziert sensorische Reize für empfindliche Nutzer:innen.
 * **Bildnachweise** liegen vollständig in [`CREDITS.md`](CREDITS.md) und maschinenlesbar in `app/src/main/assets/food_image_credits.json`.
 * Eigene Kategorien und Lebensmittel lassen sich weiterhin jederzeit ergänzen, bearbeiten oder löschen.
 
 ### 🤖 AI Menu Planner
 * Generates personalized 1-day, 3-day, or 7-day safe meal plans using your highest rated comfort foods.
+* **Real meal composition**: every food is classified into a meal role (grain, protein, dairy, fruit, vegetable, fat) and each slot is built from roles – breakfast gets a grain/fruit/dairy base, lunch and dinner get protein + side + vegetable. Plain vegetables can no longer end up as breakfast.
 * Customizable AI planning strategies:
   * *Strict Safe Foods (4-5 Stars)*
   * *Balanced Meals*
@@ -53,6 +56,11 @@
   * *Safe Food Rotation*
 * Optional custom prompt instructions (*e.g., "No dairy, focus on chicken breast and rice"*).
 * **1-Click Shopping List Integration**: Tap *"Add Ingredients"* on any planned day to instantly transfer needed items to your grocery list.
+
+### 🍽️ "Potential Meal" Selection
+* Every food card in Categories and SafeFood has a **Potential meal** button.
+* Marked foods are collected at the top of the AI Menu tab.
+* Generated plans prefer these foods; an optional switch restricts planning to them only. The selection is saved with the food data and survives app restarts.
 
 ### 🛒 Shopping List with Pantry Tracking ("Already Have")
 * Grocery list designed to handle 3 distinct ingredient statuses:
@@ -89,27 +97,30 @@ com.example.safefood/
 │   │   └── FoodModels.kt          # FoodItem, Category, ShoppingItem, NutrientType, MealPlan
 │   ├── catalog/
 │   │   ├── FoodCatalogParser.kt   # CSV-Parser, Kategorie-/Nährwert-/Saison-Zuordnung
-│   │   └── FoodImageResolver.kt   # Bild-URL-Auflösung pro Lebensmittel (Coil)
+│   │   ├── FoodImageCatalog.kt    # Generierte Zuordnung Lebensmittel -> eingebettetes Foto
+│   │   └── FoodImageResolver.kt   # Bild-Auflösung pro Lebensmittel (Coil)
 │   ├── repository/
 │   │   └── SafeFoodRepository.kt  # JSON persistent storage & StateFlow streams
 │   └── export/
 │       └── CsvExporter.kt         # CSV formatting & escape logic
 │   └── assets/
-│       └── food_catalog.csv       # Auslieferbarer Lebensmittelkatalog (500+ Einträge)
+│       ├── food_catalog.csv       # Auslieferbarer Lebensmittelkatalog (500+ Einträge)
+│       └── food_images/           # 502 eingebettete Lebensmittelfotos (offline)
 ├── ai/
-│   └── AiMenuPlanner.kt           # AI meal plan generator & ingredient extraction engine
+│   └── AiMenuPlanner.kt           # Rollenbasierter Meal-Composer & Zutaten-Extraktion
 ├── ui/
 │   ├── components/
-│   │   └── StarRatingBar.kt       # Interactive 5-star rating composable with emojis
+│   │   ├── StarRatingBar.kt       # Interactive 5-star rating composable with emojis
+│   │   ├── NutrientUi.kt          # Nutrient badges + shared filter chips
+│   │   ├── PotentialMealButton.kt # "Potential meal" toggle on food cards
+│   │   └── FoodThumbnail.kt       # Offline-Bild mit Crossfade & Platzhalter
 │   ├── screens/
 │   │   ├── categories/
 │   │   │   └── CategoriesScreen.kt  # Food Group sub-tabs & foldable categories UI
 │   │   ├── safefood/
 │   │   │   └── SafeFoodScreen.kt    # Best & latest rated safe foods UI
-│   │   ├── nutrients/
-│   │   │   └── NutrientsScreen.kt   # Macronutrient sorting UI
 │   │   ├── menuplanner/
-│   │   │   └── MenuPlannerScreen.kt # AI Menu Planning UI
+│   │   │   └── MenuPlannerScreen.kt # AI Menu Planning UI + potential meal selection
 │   │   ├── shopping/
 │   │   │   └── ShoppingListScreen.kt# Shopping list & pantry tracking UI
 │   │   └── export/

@@ -71,8 +71,9 @@ import com.example.safefood.data.model.FoodItem
 import com.example.safefood.data.model.NutrientType
 import com.example.safefood.ui.SafeFoodViewModel
 import com.example.safefood.ui.components.FoodThumbnail
+import com.example.safefood.ui.components.NutrientFilterRow
+import com.example.safefood.ui.components.PotentialMealButton
 import com.example.safefood.ui.components.StarRatingBar
-import com.example.safefood.ui.screens.nutrients.NutrientBadgeChip
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -82,6 +83,7 @@ import java.util.Locale
 fun CategoriesScreen(viewModel: SafeFoodViewModel) {
     val categories by viewModel.categories.collectAsState()
     val foods by viewModel.foods.collectAsState()
+    val nutrientFilters by viewModel.selectedNutrientFilters.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
     var selectedSubTabCategoryId by remember { mutableStateOf<String?>(null) } // null = All Food Groups
@@ -158,6 +160,16 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Nutrient filter (replaces the former Nutrients tab)
+            NutrientFilterRow(
+                selected = nutrientFilters,
+                onToggle = viewModel::toggleNutrientFilter,
+                onClear = viewModel::clearNutrientFilters,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             // Food Group Sub-Tabs (Sub tab in Categories: All, Dairy, Fruits, Legumes, Meat, Vegetables, Carbohydrates)
             ScrollableTabRow(
                 selectedTabIndex = if (selectedSubTabCategoryId == null) 0 else categories.indexOfFirst { it.id == selectedSubTabCategoryId } + 1,
@@ -201,6 +213,7 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                         val categoryFoods = foods.filter { it.categoryId == category.id }
                             .filter { searchQuery.isBlank() || it.name.contains(searchQuery, ignoreCase = true) || it.notes.contains(searchQuery, ignoreCase = true) }
                             .filter { selectedSeasonFilter == "All Seasons" || it.season.equals(selectedSeasonFilter, ignoreCase = true) }
+                            .filter { nutrientFilters.isEmpty() || it.nutrientTags.any { tag -> tag in nutrientFilters } }
 
                         item(key = "header-${category.id}") {
                         val rotationAngle by animateFloatAsState(
@@ -307,7 +320,8 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                                             viewModel.rateFood(food.id, newRating)
                                         },
                                         onEdit = { foodToEdit = food },
-                                        onDelete = { viewModel.deleteFoodItem(food.id) }
+                                        onDelete = { viewModel.deleteFoodItem(food.id) },
+                                        onTogglePotentialMeal = { viewModel.togglePotentialMeal(food.id) }
                                     )
                                 }
                             }
@@ -393,7 +407,8 @@ fun FoodItemCard(
     dateFormat: SimpleDateFormat,
     onRatingChanged: (Int) -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onTogglePotentialMeal: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -451,6 +466,13 @@ fun FoodItemCard(
                     starSize = 14.dp,
                     showEmoji = true,
                     showLabel = false
+                )
+
+                Spacer(modifier = Modifier.height(3.dp))
+
+                PotentialMealButton(
+                    selected = food.isPotentialMeal,
+                    onClick = onTogglePotentialMeal
                 )
             }
 

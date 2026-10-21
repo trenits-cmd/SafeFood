@@ -49,8 +49,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.ui.SafeFoodViewModel
-import com.example.safefood.ui.screens.nutrients.NutrientBadgeChip
 import com.example.safefood.ui.components.FoodThumbnail
+import com.example.safefood.ui.components.NutrientBadgeChip
+import com.example.safefood.ui.components.NutrientFilterRow
+import com.example.safefood.ui.components.PotentialMealButton
 import com.example.safefood.ui.components.StarRatingBar
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -63,6 +65,7 @@ fun SafeFoodScreen(viewModel: SafeFoodViewModel) {
     val recentlyRatedFoods by viewModel.recentlyRatedFoods.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val allFoods by viewModel.foods.collectAsState()
+    val nutrientFilters by viewModel.selectedNutrientFilters.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
     var selectedTabIndex by remember { mutableIntStateOf(0) }
@@ -115,6 +118,16 @@ fun SafeFoodScreen(viewModel: SafeFoodViewModel) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Nutrient filter (replaces the former Nutrients tab)
+        NutrientFilterRow(
+            selected = nutrientFilters,
+            onToggle = viewModel::toggleNutrientFilter,
+            onClear = viewModel::clearNutrientFilters,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         // Tabs: "Best Rated (4-5★)" vs "Latest Rated"
         TabRow(
             selectedTabIndex = selectedTabIndex,
@@ -146,7 +159,15 @@ fun SafeFoodScreen(viewModel: SafeFoodViewModel) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        val currentList = if (selectedTabIndex == 0) bestRatedFoods else recentlyRatedFoods
+        val currentList = (if (selectedTabIndex == 0) bestRatedFoods else recentlyRatedFoods)
+            .filter { food ->
+                searchQuery.isBlank() ||
+                    food.name.contains(searchQuery, ignoreCase = true) ||
+                    food.notes.contains(searchQuery, ignoreCase = true)
+            }
+            .filter { food ->
+                nutrientFilters.isEmpty() || food.nutrientTags.any { it in nutrientFilters }
+            }
 
         if (currentList.isEmpty()) {
             Box(
@@ -173,7 +194,8 @@ fun SafeFoodScreen(viewModel: SafeFoodViewModel) {
                         dateFormat = dateFormat,
                         onRatingChanged = { newRating ->
                             viewModel.rateFood(food.id, newRating)
-                        }
+                        },
+                        onTogglePotentialMeal = { viewModel.togglePotentialMeal(food.id) }
                     )
                 }
             }
@@ -235,7 +257,8 @@ fun SafeFoodHighlightCard(
     food: FoodItem,
     categoryName: String,
     dateFormat: SimpleDateFormat,
-    onRatingChanged: (Int) -> Unit
+    onRatingChanged: (Int) -> Unit,
+    onTogglePotentialMeal: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -326,12 +349,22 @@ fun SafeFoodHighlightCard(
                 "Last rated: ${dateFormat.format(Date(it))}"
             } ?: "Not rated yet"
 
-            Text(
-                text = dateText,
-                fontSize = 11.sp,
-                color = Color.Gray,
-                fontWeight = FontWeight.Medium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = dateText,
+                    fontSize = 11.sp,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Medium
+                )
+                PotentialMealButton(
+                    selected = food.isPotentialMeal,
+                    onClick = onTogglePotentialMeal
+                )
+            }
         }
     }
 }

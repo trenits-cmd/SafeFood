@@ -24,9 +24,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -39,11 +41,14 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -67,13 +72,19 @@ import com.example.safefood.ui.SafeFoodViewModel
 fun MenuPlannerScreen(viewModel: SafeFoodViewModel) {
     val mealPlans by viewModel.mealPlans.collectAsState()
     val foods by viewModel.foods.collectAsState()
+    val potentialMealFoods by viewModel.potentialMealFoods.collectAsState()
 
     var selectedGoal by remember { mutableStateOf(AiMenuPlanner.PlanningGoal.SAFE_ONLY) }
     var selectedDaysCount by remember { mutableIntStateOf(3) }
     var customInstructions by remember { mutableStateOf("") }
     var isGenerating by remember { mutableStateOf(false) }
+    var usePotentialMealsOnly by remember { mutableStateOf(false) }
 
     var goalDropdownExpanded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(potentialMealFoods.isEmpty()) {
+        if (potentialMealFoods.isEmpty()) usePotentialMealsOnly = false
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -81,6 +92,67 @@ fun MenuPlannerScreen(viewModel: SafeFoodViewModel) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Potential meal foods selected on food cards
+        if (potentialMealFoods.isNotEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.RestaurantMenu,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Potential meal foods (${potentialMealFoods.size})",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(onClick = { viewModel.clearPotentialMeals() }) {
+                                Text("Clear", fontSize = 12.sp)
+                            }
+                        }
+                        Text(
+                            text = "Mark foods with the 'Potential meal' button in Categories or SafeFood. " +
+                                "They are preferred when a menu is generated. Tap a chip to remove it.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            potentialMealFoods.forEach { food ->
+                                InputChip(
+                                    selected = false,
+                                    onClick = { viewModel.togglePotentialMeal(food.id) },
+                                    label = { Text(food.name, fontSize = 12.sp) },
+                                    trailingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Remove ${food.name}",
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // AI Generator Header Card
         item {
             Card(
@@ -181,9 +253,40 @@ fun MenuPlannerScreen(viewModel: SafeFoodViewModel) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    if (potentialMealFoods.isNotEmpty()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            FilterChip(
+                                selected = usePotentialMealsOnly,
+                                onClick = { usePotentialMealsOnly = !usePotentialMealsOnly },
+                                label = { Text("Only my potential meal foods", fontSize = 12.sp) },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.RestaurantMenu,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            )
+                        }
+                        Text(
+                            text = if (usePotentialMealsOnly) {
+                                "Menus will use only these ${potentialMealFoods.size} foods (rated items only)."
+                            } else {
+                                "These ${potentialMealFoods.size} foods get priority, other safe foods fill the gaps."
+                            },
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
                     Button(
                         onClick = {
-                            viewModel.generateAiMealPlan(selectedGoal, customInstructions, selectedDaysCount)
+                            viewModel.generateAiMealPlan(
+                                goal = selectedGoal,
+                                customInstructions = customInstructions,
+                                daysCount = selectedDaysCount,
+                                usePotentialMealsOnly = usePotentialMealsOnly
+                            )
                         },
                         modifier = Modifier
                             .fillMaxWidth()

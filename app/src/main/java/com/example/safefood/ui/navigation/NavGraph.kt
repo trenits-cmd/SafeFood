@@ -8,7 +8,6 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -44,14 +43,12 @@ import com.example.safefood.ui.SafeFoodViewModel
 import com.example.safefood.ui.screens.categories.CategoriesScreen
 import com.example.safefood.ui.screens.export.ExportScreen
 import com.example.safefood.ui.screens.menuplanner.MenuPlannerScreen
-import com.example.safefood.ui.screens.nutrients.NutrientsScreen
 import com.example.safefood.ui.screens.safefood.SafeFoodScreen
 import com.example.safefood.ui.screens.shopping.ShoppingListScreen
 
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     object Categories : Screen("categories", "Categories", Icons.Default.Category)
     object SafeFood : Screen("safe_food", "SafeFood", Icons.Default.Verified)
-    object Nutrients : Screen("nutrients", "Nutrients", Icons.Default.Spa)
     object AiMenu : Screen("ai_menu", "Menu", Icons.Default.AutoAwesome)
     object Shopping : Screen("shopping", "Shopping", Icons.Default.ShoppingCart)
     object Export : Screen("export", "Export CSV", Icons.Default.FileDownload)
@@ -77,7 +74,6 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
     val bottomNavItems = listOf(
         Screen.Categories,
         Screen.SafeFood,
-        Screen.Nutrients,
         Screen.AiMenu,
         Screen.Shopping
     )
@@ -209,9 +205,6 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
             }
             composable(Screen.SafeFood.route) {
                 SafeFoodScreen(viewModel = viewModel)
-            }
-            composable(Screen.Nutrients.route) {
-                NutrientsScreen(viewModel = viewModel)
             }
             composable(Screen.AiMenu.route) {
                 MenuPlannerScreen(viewModel = viewModel)

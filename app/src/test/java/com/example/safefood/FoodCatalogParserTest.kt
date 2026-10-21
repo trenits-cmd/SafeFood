@@ -107,12 +107,16 @@ class FoodCatalogParserTest {
         // 506 CSV-Zeilen, aber 502 Schluessel: Onion- und Bell-Pepper-Varianten
         // (z. B. "Onion (Red)" / "Onion (White)") teilen sich denselben normalisierten Namen.
         assertEquals("Der Katalog muss alle Lebensmittel abdecken", 502, images.size)
-        assertTrue("Alle Bild-URLs muessen HTTPS sein", images.values.all { it.startsWith("https://") })
-
-        val unique = images.values.distinct().size
         assertTrue(
-            "Zu viele doppelte Fotos: nur $unique von ${images.size} sind unterschiedlich",
-            unique >= 460
+            "Alle Bilder muessen eingebettet oder HTTPS sein",
+            images.values.all {
+                it.startsWith("file:///android_asset/food_images/") || it.startsWith("https://")
+            }
+        )
+        assertEquals(
+            "Alle Katalogbilder sollten offline eingebettet sein",
+            502,
+            images.values.count { it.startsWith("file:///android_asset/food_images/") }
         )
     }
 

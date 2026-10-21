@@ -7,8 +7,8 @@
 ## ✨ Key Features
 
 ### 📂 Foldable Categories with Food Group Sub-Tabs
-* Comprehensive library of 500+ ingredients grouped into major food groups: **Dairy**, **Fruits**, **Legumes**, **Meat**, **Vegetables**, and **Carbohydrates**.
-* Interactive **Food Group Sub-Tabs** at the top of the Categories tab (*All, Dairy, Fruits, Legumes, Meat, Vegetables, Carbohydrates*) for instant navigation.
+* Comprehensive library of 500+ ingredients grouped into major food groups: **Dairy**, **Fruits**, **Legumes**, **Meat**, **Vegetables**, **Carbohydrates**, and **Pantry & Spices**.
+* Interactive **Food Group Sub-Tabs** at the top of the Categories tab (*All, Dairy, Fruits, Legumes, Meat, Vegetables, Carbohydrates, Pantry & Spices*) for instant navigation.
 * Fold (collapse) or unfold (expand) categories with smooth animations to reduce screen clutter and visual overwhelm.
 * Custom categories and ingredients can be added, edited, or removed at any time.
 
@@ -25,7 +25,7 @@
 ### 🛡️ "SafeFood" Highlights Tab
 * Dedicated tab featuring your **Best Rated (4-5★)** safe comfort foods and **Latest Rated** history.
 * Quick stats summary showing count of 100% safe verified foods.
-* Real-time search bar for quick lookup during anxious or overwhelming meal choices.
+* Real-time search bar for quick lookup during anxious or overwhelming meal choices. It is token-based, so word order and plurals do not matter ("red onion" finds "Onion (Red)").\n* **Blacklist** category automatically collects foods rated 1 star and excludes them from recommendations.
 
 ### 🥗 Nutrient Filter (in Categories & SafeFood)
 * Filter both the Categories and SafeFood tabs by nutritional building blocks:
@@ -38,10 +38,10 @@
 * Visual macronutrient badges remain on every food card.
 
 ### 📦 Food Catalog (CSV) & Bild-Resolver
-* **500+ Lebensmittel** werden aus `app/src/main/assets/food_catalog.csv` eingelesen (`Food Catalog,Category` – 506 Einträge) statt fest im Code zu stehen.
-* Beim ersten Start wird der Katalog automatisch in **6 Kategorien** einsortiert und mit Makronutrient-Tags sowie **Saison-Hinweisen** (All Year / Spring / Summer / Autumn / Winter) angereichert.
+* **500+ Lebensmittel** werden aus `app/src/main/assets/food_catalog.csv` eingelesen (`Food Catalog,Category` – 542 Einträge) statt fest im Code zu stehen.
+* Beim ersten Start wird der Katalog automatisch in **7 Kategorien** einsortiert und mit Makronutrient-Tags sowie **Saison-Hinweisen** (All Year / Spring / Summer / Autumn / Winter) angereichert.
 * **Stabile IDs** (`food_<slug>`) sorgen dafür, dass Ratings und Notizen auch nach einem Katalog-Update am selben Lebensmittel hängen bleiben.
-* **Eigenes Foto für jedes Lebensmittel**: Alle 506 Katalogeinträge (502 Namen) **plus 102 selbst angelegte Lebensmittel** haben ein konkretes Foto (`FoodImageCatalog`). Die Bilder liegen als komprimierte JPEGs in `app/src/main/assets/food_images/` und werden **offline** ausgeliefert – kein Nachladen, keine fehlenden Kacheln, keine Hotlink-Probleme. Geladen wird per Coil mit Crossfade und ruhigem Platzhalter (`FoodThumbnail`).
+* **Eigenes Foto für jedes Lebensmittel**: Alle 542 Katalogeinträge (502 Namen) **plus 102 selbst angelegte Lebensmittel** haben ein konkretes Foto (`FoodImageCatalog`). Die Bilder liegen als komprimierte JPEGs in `app/src/main/assets/food_images/` und werden **offline** ausgeliefert – kein Nachladen, keine fehlenden Kacheln, keine Hotlink-Probleme. Geladen wird per Coil mit Crossfade und ruhigem Platzhalter (`FoodThumbnail`).
 * **Ruhige, neutrale Motive**: Für Fleisch und heikle Zutaten werden zubereitete Gerichte statt roher Ware, Organe oder Verpackungen gezeigt; botanische Feld-/Blattfotos und Produktpackungen wurden ersetzt. Das reduziert sensorische Reize für empfindliche Nutzer:innen.
 * **Neue eigene Lebensmittel** werden automatisch per Namensabgleich (z. B. „Cheddar“ → „Cheddar Cheese“) oder mit einem neutralen Kategorie-Foto versorgt – nie mit einem kaputten oder unpassenden Netz-Bild.
 * **Bildnachweise** liegen vollständig in [`CREDITS.md`](CREDITS.md) und maschinenlesbar in `app/src/main/assets/food_image_credits.json`.
@@ -57,7 +57,7 @@
   * *Low Energy / Fast Prep*
   * *Safe Food Rotation*
 * Optional custom prompt instructions (*e.g., "No dairy, focus on chicken breast and rice"*).
-* **1-Click Shopping List Integration**: Tap *"Add Ingredients"* on any planned day to instantly transfer needed items to your grocery list.
+* **Cooked dish preview**: each meal slot gets a dish title and a photo of the finished meal (e.g. "Turkey Rice Bowl"), even for plans saved before this feature.\n* **1-Click Shopping List Integration**: Tap *"Add Ingredients"* on any planned day to instantly transfer needed items to your grocery list.
 
 ### 🍽️ "Potential Meal" Selection
 * Every food card in Categories and SafeFood has a **Potential meal** button.
@@ -107,7 +107,7 @@ com.example.safefood/
 │       └── CsvExporter.kt         # CSV formatting & escape logic
 │   └── assets/
 │       ├── food_catalog.csv       # Auslieferbarer Lebensmittelkatalog (500+ Einträge)
-│       └── food_images/           # 604 eingebettete Lebensmittelfotos + 6 Kategorie-Fallbacks (offline)
+│       └── food_images/           # 668 eingebettete Fotos: Lebensmittel, 20 Gerichte + 7 Kategorie-Fallbacks (offline)
 ├── ai/
 │   └── AiMenuPlanner.kt           # Rollenbasierter Meal-Composer & Zutaten-Extraktion
 ├── ui/

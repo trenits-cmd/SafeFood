@@ -416,10 +416,15 @@ object AiMenuPlanner {
             "salt", "sugar", "pepper", "black pepper", "white pepper", "cinnamon", "oregano",
             "basil", "thyme", "rosemary", "parsley", "cumin", "paprika", "turmeric", "ginger",
             "vinegar", "ketchup", "mustard", "mayonnaise", "soy sauce", "stock", "broth",
-            "baking powder", "baking soda", "yeast", "gelatin", "cocoa powder", "vanilla"
+            "baking powder", "baking soda", "yeast", "gelatin", "cocoa powder", "vanilla",
+            "bay leaves", "bay leaf", "chili flakes", "curry powder", "garlic powder",
+            "onion powder", "nutmeg", "dill", "honey", "cornstarch", "tomato paste",
+            "vegetable stock", "coconut milk", "canned tomatoes", "canned tomato",
+            "wheat flour", "flour", "lemon juice"
         )
         return n in exact || n.endsWith(" oil") || n == "oil" || n.endsWith(" spice") ||
-            n.endsWith(" seasoning") || n.endsWith(" salt")
+            n.endsWith(" seasoning") || n.endsWith(" salt") || n.endsWith(" powder") ||
+            n.endsWith(" flakes") || n.endsWith(" paste")
     }
 
     // ------------------------------------------------------------------ food classification

@@ -15,8 +15,12 @@ package com.example.safefood.data.catalog
 object FoodImageResolver {
 
     fun urlFor(name: String, category: String): String {
-        val key = normalize(name)
+        // Qualifier wie "(Red)" bleiben hier erhalten, damit z. B. "Onion (Red)"
+        // ein eigenes Foto bekommt. Gibt es keines, wird wie bisher ohne Klammer gesucht.
+        val qualifiedKey = normalizeWithQualifier(name)
+        FoodImageCatalog.images[qualifiedKey]?.let { return it }
 
+        val key = normalize(name)
         FoodImageCatalog.images[key]?.let { return it }
         bestFuzzyMatch(key)?.let { return it }
 
@@ -29,6 +33,13 @@ object FoodImageResolver {
     fun normalize(name: String): String {
         return name.lowercase()
             .replace(Regex("\\(.*?\\)"), " ")
+            .replace(Regex("[^a-z0-9\\s]"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    }
+
+    private fun normalizeWithQualifier(name: String): String {
+        return name.lowercase()
             .replace(Regex("[^a-z0-9\\s]"), " ")
             .replace(Regex("\\s+"), " ")
             .trim()
@@ -91,6 +102,7 @@ object FoodImageResolver {
             listOf("legume", "bean", "lentil", "hülsen", "huelsen").any { c.contains(it) } -> "legumes"
             listOf("meat", "fish", "poultry", "fleisch", "fisch", "geflügel").any { c.contains(it) } -> "meat"
             listOf("vegetable", "gemüse", "gemuse", "salad", "salat").any { c.contains(it) } -> "vegetables"
+            listOf("pantry", "spice", "spices", "gewürz", "gewuerz", "vorrat").any { c.contains(it) } -> "pantry"
             else -> "carbohydrates"
         }
     }

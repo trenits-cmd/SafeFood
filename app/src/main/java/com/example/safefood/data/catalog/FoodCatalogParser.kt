@@ -18,7 +18,9 @@ object FoodCatalogParser {
         FoodCategory(id = "cat_legumes", name = "Legumes", description = "Beans, lentils, peas & soy"),
         FoodCategory(id = "cat_meat", name = "Meat", description = "Poultry, beef, pork, lamb & cuts"),
         FoodCategory(id = "cat_vegetables", name = "Vegetables", description = "Leafy greens, roots & squash"),
-        FoodCategory(id = "cat_carbs", name = "Carbohydrates", description = "Grains, rices, oats & pastas")
+        FoodCategory(id = "cat_carbs", name = "Carbohydrates", description = "Grains, rices, oats & pastas"),
+        FoodCategory(id = "cat_pantry", name = "Pantry & Spices", description = "Spices, oils, baking & pantry staples"),
+        FoodCategory(id = "cat_blacklist", name = "Blacklist", description = "Foods rated 1 star - not safe to include")
     )
 
     fun parseCsv(csv: String): List<CatalogFoodRow> {
@@ -112,6 +114,7 @@ object FoodCatalogParser {
             "meat" -> listOf(NutrientType.PROTEIN, NutrientType.HEALTHY_FAT)
             "vegetables" -> listOf(NutrientType.VITAMINS_MINERALS, NutrientType.FIBER)
             "carbohydrates" -> listOf(NutrientType.CARBOHYDRATE, NutrientType.FIBER)
+            "pantry & spices" -> listOf(NutrientType.VITAMINS_MINERALS)
             else -> listOf(NutrientType.VITAMINS_MINERALS)
         }
     }
@@ -122,7 +125,8 @@ object FoodCatalogParser {
             categoryName.equals("Dairy", true) ||
                 categoryName.equals("Legumes", true) ||
                 categoryName.equals("Meat", true) ||
-                categoryName.equals("Carbohydrates", true) -> "All Year"
+                categoryName.equals("Carbohydrates", true) ||
+                categoryName.equals("Pantry & Spices", true) -> "All Year"
             listOf("strawberry", "cherry", "asparagus", "artichoke", "pea", "arugula", "radish")
                 .any { key.contains(it) } -> "Spring"
             listOf("peach", "plum", "berry", "melon", "watermelon", "tomato", "cucumber", "zucchini", "corn")

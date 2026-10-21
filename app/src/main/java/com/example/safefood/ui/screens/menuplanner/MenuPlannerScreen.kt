@@ -57,12 +57,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import com.example.safefood.ai.AiMenuPlanner
+import com.example.safefood.data.catalog.MealDishResolver
 import com.example.safefood.data.model.MealPlan
 import com.example.safefood.data.model.MealPlanDay
 import com.example.safefood.ui.SafeFoodViewModel
@@ -477,19 +483,123 @@ fun DayMealRow(
 
 @Composable
 fun MealSlotText(label: String, value: String) {
-    if (value.isNotBlank()) {
-        Row(modifier = Modifier.padding(vertical = 1.dp)) {
-            Text(
-                text = "$label: ",
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurface
+    if (value.isBlank()) return
+    val dish = MealDishResolver.resolve(label, value)
+    var showRecipe by remember { mutableStateOf(false) }
+    
+    if (showRecipe && !value.startsWith("No ") && !value.startsWith("Add ") && !value.startsWith("Rate ")) {
+        RecipeDialog(label = label, mealText = value, onDismiss = { showRecipe = false })
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (dish != null) {
+            val context = LocalContext.current
+            val request = remember(dish.imageUrl) {
+                ImageRequest.Builder(context)
+                    .data(dish.imageUrl)
+                    .crossfade(true)
+                    .build()
+            }
+            SubcomposeAsyncImage(
+                model = request,
+                contentDescription = dish.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(enabled = !value.startsWith("No ") && !value.startsWith("Add ") && !value.startsWith("Rate ")) {
+                        showRecipe = true
+                    }
             )
-            Text(
-                text = value,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Spacer(modifier = Modifier.height(8.dp))
         }
+        
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(enabled = !value.startsWith("No ") && !value.startsWith("Add ") && !value.startsWith("Rate ")) {
+                    showRecipe = true
+                }
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            if (dish != null && false) {
+                MealPhoto(
+                    imageUrl = dish.imageUrl,
+                    contentDescription = dish.title,
+                    modifier = Modifier.size(72.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = label.uppercase(),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp,
+                        letterSpacing = 0.8.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    if (dish != null) {
+                        Text(
+                            text = "  ${dish.title}",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = value,
+                    fontSize = 13.sp,
+                    lineHeight = 17.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MealPhoto(
+    imageUrl: String,
+    contentDescription: String,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val request = remember(imageUrl) {
+        ImageRequest.Builder(context)
+            .data(imageUrl)
+            .crossfade(true)
+            .build()
+    }
+
+    SubcomposeAsyncImage(
+        model = request,
+        contentDescription = contentDescription,
+        contentScale = ContentScale.Crop,
+        modifier = modifier.clip(RoundedCornerShape(10.dp)),
+        loading = { MealPhotoPlaceholder() },
+        error = { MealPhotoPlaceholder() }
+    )
+}
+
+@Composable
+private fun MealPhotoPlaceholder() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Restaurant,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            modifier = Modifier.size(22.dp)
+        )
     }
 }

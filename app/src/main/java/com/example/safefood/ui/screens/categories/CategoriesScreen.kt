@@ -66,6 +66,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.safefood.data.catalog.FoodSearch
 import com.example.safefood.data.model.FoodCategory
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.data.model.NutrientType
@@ -98,9 +99,7 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
 
     // Search, season and nutrient filters are combined (nutrients match any selected tag).
     fun matchesFilters(food: FoodItem): Boolean {
-        val matchesSearch = searchQuery.isBlank() ||
-            food.name.contains(searchQuery, ignoreCase = true) ||
-            food.notes.contains(searchQuery, ignoreCase = true)
+        val matchesSearch = FoodSearch.matches(food, searchQuery)
         val matchesSeason = selectedSeasonFilter == "All Seasons" ||
             food.season.equals(selectedSeasonFilter, ignoreCase = true)
         val matchesNutrients = nutrientFilters.isEmpty() ||
@@ -142,15 +141,6 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                OutlinedButton(
-                    onClick = { showAddCategoryDialog = true },
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(Icons.Default.Folder, contentDescription = "New Group", modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("+ Group")
-                }
-                Spacer(modifier = Modifier.width(6.dp))
                 OutlinedButton(
                     onClick = { viewModel.startRandomRating() },
                     shape = RoundedCornerShape(12.dp)

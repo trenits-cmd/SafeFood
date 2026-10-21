@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.safefood.data.catalog.FoodSearch
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.ui.SafeFoodViewModel
 import com.example.safefood.ui.components.FoodDetailDialog
@@ -163,11 +164,7 @@ fun SafeFoodScreen(viewModel: SafeFoodViewModel) {
         Spacer(modifier = Modifier.height(12.dp))
 
         val currentList = (if (selectedTabIndex == 0) bestRatedFoods else recentlyRatedFoods)
-            .filter { food ->
-                searchQuery.isBlank() ||
-                    food.name.contains(searchQuery, ignoreCase = true) ||
-                    food.notes.contains(searchQuery, ignoreCase = true)
-            }
+            .filter { food -> FoodSearch.matches(food, searchQuery) }
             .filter { food ->
                 nutrientFilters.isEmpty() || food.nutrientTags.any { it in nutrientFilters }
             }

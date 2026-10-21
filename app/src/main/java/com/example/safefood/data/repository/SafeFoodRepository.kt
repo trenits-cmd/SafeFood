@@ -58,13 +58,22 @@ class SafeFoodRepository(private val context: Context) {
             val loadedShopping = readListFromFile<ShoppingItem>(shoppingFile)
             val loadedMealPlans = readListFromFile<MealPlan>(mealPlansFile)
 
-            val categories = loadedCategories.ifEmpty { FoodCatalogParser.defaultCategories }
+            val catalogUpgrade = loadedFoods.isEmpty() || meta.catalogVersion < CATALOG_VERSION
+            val storedCategories = loadedCategories.ifEmpty { FoodCatalogParser.defaultCategories }
+            // New catalog versions can introduce a new default group (e.g. Pantry & Spices).
+            val categories = if (catalogUpgrade) {
+                storedCategories + FoodCatalogParser.defaultCategories.filter { default ->
+                    storedCategories.none { it.id == default.id }
+                }
+            } else {
+                storedCategories
+            }
             val catalogFoods = loadCatalogFoods(categories)
             val foods = mergeCatalog(
                 existing = loadedFoods,
                 catalog = catalogFoods,
                 categories = categories,
-                refreshImages = loadedFoods.isEmpty() || meta.catalogVersion < CATALOG_VERSION
+                refreshImages = catalogUpgrade
             )
 
             _categories.value = categories
@@ -72,7 +81,7 @@ class SafeFoodRepository(private val context: Context) {
             _shoppingList.value = loadedShopping
             _mealPlans.value = loadedMealPlans
 
-            if (loadedCategories.isEmpty()) saveCategoriesToDisk(categories)
+            if (categories != loadedCategories) saveCategoriesToDisk(categories)
             if (loadedFoods.isEmpty() || meta.catalogVersion < CATALOG_VERSION) {
                 saveFoodsToDisk(foods)
                 saveMeta(AppMeta(catalogVersion = CATALOG_VERSION))
@@ -194,12 +203,22 @@ class SafeFoodRepository(private val context: Context) {
     suspend fun rateFood(foodId: String, newRating: Int) = mutex.withLock {
         val rating = FoodRatings.coerce(newRating)
         val now = System.currentTimeMillis()
+        val blacklistCategoryId = _categories.value.firstOrNull { it.name == "Blacklist" }?.id
         val updated = _foods.value.map { food ->
             if (food.id == foodId) {
-                food.copy(
-                    rating = rating,
-                    lastRatedTimestamp = if (rating > 0) now else food.lastRatedTimestamp
-                )
+                if (rating == FoodRatings.YUCKY && blacklistCategoryId != null && food.categoryId != blacklistCategoryId) {
+                    food.copy(
+                        categoryId = blacklistCategoryId,
+                        rating = rating,
+                        lastRatedTimestamp = now,
+                        isPotentialMeal = false
+                    )
+                } else {
+                    food.copy(
+                        rating = rating,
+                        lastRatedTimestamp = if (rating > 0) now else food.lastRatedTimestamp
+                    )
+                }
             } else food
         }
         _foods.value = updated
@@ -334,7 +353,7 @@ class SafeFoodRepository(private val context: Context) {
     }
 
     companion object {
-        const val CATALOG_VERSION = 5
+        const val CATALOG_VERSION = 6
         private const val CATALOG_ASSET = "food_catalog.csv"
         private const val FIVE_DAYS_MS = 5L * 24 * 60 * 60 * 1000L
     }

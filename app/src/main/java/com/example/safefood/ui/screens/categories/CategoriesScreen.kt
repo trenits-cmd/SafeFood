@@ -211,10 +211,12 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                 selectedTabIndex = run {
                     if (selectedSubTabCategoryId == null) 0
                     else {
-                        val idx = categories.filter { !it.name.equals("Blacklist", ignoreCase = true) }.indexOfFirst { it.id == selectedSubTabCategoryId }
-                        if (idx >= 0) idx + 1 else {
-                            val blacklist = categories.find { it.name.equals("Blacklist", ignoreCase = true) }
-                            if (blacklist?.id == selectedSubTabCategoryId) categories.filter { !it.name.equals("Blacklist", ignoreCase = true) }.size + 1 else 0
+                        val blacklist = categories.find { it.name.equals("Blacklist", ignoreCase = true) }
+                        if (blacklist?.id == selectedSubTabCategoryId) 1
+                        else {
+                            val idx = categories.filter { !it.name.equals("Blacklist", ignoreCase = true) }
+                                .indexOfFirst { it.id == selectedSubTabCategoryId }
+                            if (idx >= 0) idx + 2 else 0
                         }
                     }
                 },
@@ -228,21 +230,23 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                     text = { Text("All Groups (${categories.count { !it.name.equals("Blacklist", ignoreCase = true) }})", fontWeight = FontWeight.Bold) }
                 )
 
-                categories.filter { !it.name.equals("Blacklist", ignoreCase = true) }.forEach { category ->
-                    val itemCount = visibleFoods.count { it.categoryId == category.id }
-                    Tab(
-                        selected = selectedSubTabCategoryId == category.id,
-                        onClick = { selectedSubTabCategoryId = category.id },
-                        text = { Text("${category.name} ($itemCount)", fontWeight = FontWeight.Bold) }
-                    )
-                }
-                
+                // Keep the Blacklist visible without horizontal scrolling; it is a
+                // frequent destination after rating a food 1 star.
                 categories.find { it.name.equals("Blacklist", ignoreCase = true) }?.let { blacklist ->
                     val itemCount = foods.count { it.categoryId == blacklist.id }
                     Tab(
                         selected = selectedSubTabCategoryId == blacklist.id,
                         onClick = { selectedSubTabCategoryId = blacklist.id },
                         text = { Text("${blacklist.name} ($itemCount)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error) }
+                    )
+                }
+
+                categories.filter { !it.name.equals("Blacklist", ignoreCase = true) }.forEach { category ->
+                    val itemCount = visibleFoods.count { it.categoryId == category.id }
+                    Tab(
+                        selected = selectedSubTabCategoryId == category.id,
+                        onClick = { selectedSubTabCategoryId = category.id },
+                        text = { Text("${category.name} ($itemCount)", fontWeight = FontWeight.Bold) }
                     )
                 }
             }

@@ -2,6 +2,8 @@ package com.example.safefood.ui.navigation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.safefood.ui.components.FoodPhoto
 import com.example.safefood.ui.components.StarRatingBar
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -166,6 +169,13 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("Group: $categoryName", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         Text(food.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        FoodPhoto(
+                            food = food,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(150.dp),
+                            cornerRadius = 12.dp
+                        )
                         if (food.notes.isNotBlank()) {
                             Text(food.notes, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }

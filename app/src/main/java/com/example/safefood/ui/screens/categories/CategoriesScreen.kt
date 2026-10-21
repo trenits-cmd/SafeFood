@@ -70,6 +70,7 @@ import com.example.safefood.data.model.FoodCategory
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.data.model.NutrientType
 import com.example.safefood.ui.SafeFoodViewModel
+import com.example.safefood.ui.components.FoodDetailDialog
 import com.example.safefood.ui.components.FoodThumbnail
 import com.example.safefood.ui.components.NutrientFilterRow
 import com.example.safefood.ui.components.PotentialMealButton
@@ -91,6 +92,7 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var showAddFoodDialog by remember { mutableStateOf(false) }
     var foodToEdit by remember { mutableStateOf<FoodItem?>(null) }
+    var foodDetailId by remember { mutableStateOf<String?>(null) }
 
     val dateFormat = remember { SimpleDateFormat("MMM d, yyyy 'at' HH:mm", Locale.getDefault()) }
 
@@ -375,7 +377,8 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
                                         },
                                         onEdit = { foodToEdit = food },
                                         onDelete = { viewModel.deleteFoodItem(food.id) },
-                                        onTogglePotentialMeal = { viewModel.togglePotentialMeal(food.id) }
+                                        onTogglePotentialMeal = { viewModel.togglePotentialMeal(food.id) },
+                                        onImageClick = { foodDetailId = food.id }
                                     )
                                 }
                             }
@@ -453,6 +456,20 @@ fun CategoriesScreen(viewModel: SafeFoodViewModel) {
             }
         )
     }
+
+    // Dialog: grosses Foto mit direktem Rating
+    foodDetailId?.let { id ->
+        val food = foods.find { it.id == id }
+        if (food != null) {
+            FoodDetailDialog(
+                food = food,
+                categoryName = categories.find { it.id == food.categoryId }?.name ?: "General",
+                onRatingSelected = { newRating -> viewModel.rateFood(food.id, newRating) },
+                onTogglePotentialMeal = { viewModel.togglePotentialMeal(food.id) },
+                onDismiss = { foodDetailId = null }
+            )
+        }
+    }
 }
 
 @Composable
@@ -462,7 +479,8 @@ fun FoodItemCard(
     onRatingChanged: (Int) -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    onTogglePotentialMeal: () -> Unit = {}
+    onTogglePotentialMeal: () -> Unit = {},
+    onImageClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -479,7 +497,10 @@ fun FoodItemCard(
             FoodThumbnail(
                 food = food,
                 size = 42.dp,
-                cornerRadius = 8.dp
+                cornerRadius = 8.dp,
+                modifier = Modifier.clickable(
+                    onClickLabel = "Enlarge photo"
+                ) { onImageClick() }
             )
 
             Spacer(modifier = Modifier.width(10.dp))

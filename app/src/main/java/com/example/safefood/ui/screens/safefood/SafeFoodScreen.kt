@@ -1,6 +1,7 @@
 package com.example.safefood.ui.screens.safefood
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.ui.SafeFoodViewModel
+import com.example.safefood.ui.components.FoodDetailDialog
 import com.example.safefood.ui.components.FoodThumbnail
 import com.example.safefood.ui.components.NutrientBadgeChip
 import com.example.safefood.ui.components.NutrientFilterRow
@@ -67,6 +69,7 @@ fun SafeFoodScreen(viewModel: SafeFoodViewModel) {
     val allFoods by viewModel.foods.collectAsState()
     val nutrientFilters by viewModel.selectedNutrientFilters.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
+    var foodDetailId by remember { mutableStateOf<String?>(null) }
 
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val categoryMap = remember(categories) { categories.associate { it.id to it.name } }
@@ -195,10 +198,25 @@ fun SafeFoodScreen(viewModel: SafeFoodViewModel) {
                         onRatingChanged = { newRating ->
                             viewModel.rateFood(food.id, newRating)
                         },
-                        onTogglePotentialMeal = { viewModel.togglePotentialMeal(food.id) }
+                        onTogglePotentialMeal = { viewModel.togglePotentialMeal(food.id) },
+                        onImageClick = { foodDetailId = food.id }
                     )
                 }
             }
+        }
+    }
+
+    // Dialog: grosses Foto mit direktem Rating
+    foodDetailId?.let { id ->
+        val food = allFoods.find { it.id == id }
+        if (food != null) {
+            FoodDetailDialog(
+                food = food,
+                categoryName = categoryMap[food.categoryId] ?: "General",
+                onRatingSelected = { newRating -> viewModel.rateFood(food.id, newRating) },
+                onTogglePotentialMeal = { viewModel.togglePotentialMeal(food.id) },
+                onDismiss = { foodDetailId = null }
+            )
         }
     }
 }
@@ -258,7 +276,8 @@ fun SafeFoodHighlightCard(
     categoryName: String,
     dateFormat: SimpleDateFormat,
     onRatingChanged: (Int) -> Unit,
-    onTogglePotentialMeal: () -> Unit = {}
+    onTogglePotentialMeal: () -> Unit = {},
+    onImageClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -278,7 +297,10 @@ fun SafeFoodHighlightCard(
                 FoodThumbnail(
                     food = food,
                     size = 52.dp,
-                    cornerRadius = 10.dp
+                    cornerRadius = 10.dp,
+                    modifier = Modifier.clickable(
+                        onClickLabel = "Enlarge photo"
+                    ) { onImageClick() }
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {

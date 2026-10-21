@@ -27,7 +27,8 @@ import com.example.safefood.data.model.FoodItem
  * Einheitliches Lebensmittel-Foto mit Crossfade und ruhigem Platzhalter.
  *
  * Der Platzhalter bleibt sichtbar, waehrend das Bild laedt oder wenn es nicht
- * geladen werden kann (z. B. offline) - so springt das Layout nie.
+ * geladen werden kann - so springt das Layout nie. Es wird nie eine externe
+ * Ersatz-URL nachgeladen: fehlt ein Bild, bleibt der neutrale Platzhalter.
  */
 @Composable
 fun FoodThumbnail(
@@ -36,10 +37,34 @@ fun FoodThumbnail(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = 8.dp
 ) {
+    FoodPhoto(
+        food = food,
+        modifier = modifier.size(size),
+        cornerRadius = cornerRadius
+    )
+}
+
+/**
+ * Grosses Lebensmittel-Foto, z. B. in Dialogen. Die Groesse kommt vom Aufrufer
+ * (Breite/Hoehe), damit dasselbe Bild in Karten und Detailansichten funktioniert.
+ */
+@Composable
+fun FoodPhoto(
+    food: FoodItem,
+    modifier: Modifier = Modifier,
+    cornerRadius: Dp = 12.dp
+) {
     val context = LocalContext.current
-    val request = remember(food.imageUrl) {
+    val imageUrl = food.imageUrl
+
+    if (imageUrl.isBlank()) {
+        ThumbnailPlaceholder(modifier = modifier.clip(RoundedCornerShape(cornerRadius)))
+        return
+    }
+
+    val request = remember(imageUrl) {
         ImageRequest.Builder(context)
-            .data(food.imageUrl.ifBlank { FALLBACK_IMAGE })
+            .data(imageUrl)
             .crossfade(true)
             .build()
     }
@@ -49,7 +74,6 @@ fun FoodThumbnail(
         contentDescription = food.name,
         contentScale = ContentScale.Crop,
         modifier = modifier
-            .size(size)
             .clip(RoundedCornerShape(cornerRadius)),
         loading = { ThumbnailPlaceholder() },
         error = { ThumbnailPlaceholder() }
@@ -57,9 +81,9 @@ fun FoodThumbnail(
 }
 
 @Composable
-private fun ThumbnailPlaceholder() {
+private fun ThumbnailPlaceholder(modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center
@@ -72,6 +96,3 @@ private fun ThumbnailPlaceholder() {
         )
     }
 }
-
-private const val FALLBACK_IMAGE =
-    "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500&auto=format&fit=crop&q=60"

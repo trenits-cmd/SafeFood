@@ -57,9 +57,9 @@ fun StepByStepPlannerScreen(viewModel: SafeFoodViewModel) {
 
     // Step state machine: 0=GRAIN, 1=PROTEIN, 2=VEGETABLE, 3=SUMMARY
     var currentStep by remember { mutableIntStateOf(0) }
-    var selectedGrain by remember { mutableStateOf<FoodItem?>(null) }
-    var selectedProtein by remember { mutableStateOf<FoodItem?>(null) }
-    var selectedVegetable by remember { mutableStateOf<FoodItem?>(null) }
+    val selectedGrains = remember { mutableStateOf<Set<FoodItem>>(emptySet()) }
+    val selectedProteins = remember { mutableStateOf<Set<FoodItem>>(emptySet()) }
+    val selectedVegetables = remember { mutableStateOf<Set<FoodItem>>(emptySet()) }
 
     // Helper functions for category matching
     fun isGrain(food: FoodItem): Boolean {
@@ -77,10 +77,10 @@ fun StepByStepPlannerScreen(viewModel: SafeFoodViewModel) {
         return listOf("broccoli", "carrot", "spinach", "kale", "lettuce", "cabbage", "cauliflower", "cucumber", "zucchini", "pepper", "onion", "garlic", "celery", "asparagus", "artichoke", "bean", "pea", "beet", "radish", "turnip", "pumpkin", "squash", "mushroom", "tomato", "fennel", "chard").any { name.contains(it) }
     }
 
-    val availableFoods = remember(currentStep, foods, selectedGrain) {
+    val availableFoods = remember(currentStep, foods) {
         when (currentStep) {
             0 -> foods.filter { isGrain(it) }
-            1 -> foods.filter { isProtein(it) && it.id != selectedGrain?.id }
+            1 -> foods.filter { isProtein(it) }
             2 -> foods.filter { isVegetable(it) }
             else -> emptyList()
         }
@@ -94,9 +94,9 @@ fun StepByStepPlannerScreen(viewModel: SafeFoodViewModel) {
     )
 
     val stepDescriptions = arrayOf(
-        "Select a grain or starch base for your meal energy.",
-        "Select a main protein source to balance your meal.",
-        "Select fresh vegetables to add fiber and nutrients.",
+        "Select one or more grain or starch base for your meal energy.",
+        "Select one or more main protein sources to balance your meal.",
+        "Select one or more fresh vegetables to add fiber and nutrients.",
         "Review your step-by-step custom meal composition below."
     )
 
@@ -165,10 +165,16 @@ fun StepByStepPlannerScreen(viewModel: SafeFoodViewModel) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (currentStep < 3) {
+                    val selectedCount = when (currentStep) {
+                        0 -> selectedGrains.value.size
+                        1 -> selectedProteins.value.size
+                        2 -> selectedVegetables.value.size
+                        else -> 0
+                    }
                     Text(
-                        text = "Available Items (${availableFoods.size})",
+                        text = "Available Items (${availableFoods.size}) • Selected: $selectedCount (multiple allowed)",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 14.sp
                     )
 
                     if (availableFoods.isEmpty()) {
@@ -193,9 +199,9 @@ fun StepByStepPlannerScreen(viewModel: SafeFoodViewModel) {
                         ) {
                             items(availableFoods, key = { it.id }) { food ->
                                 val isSelected = when (currentStep) {
-                                    0 -> selectedGrain?.id == food.id
-                                    1 -> selectedProtein?.id == food.id
-                                    2 -> selectedVegetable?.id == food.id
+                                    0 -> selectedGrains.value.any { it.id == food.id }
+                                    1 -> selectedProteins.value.any { it.id == food.id }
+                                    2 -> selectedVegetables.value.any { it.id == food.id }
                                     else -> false
                                 }
                                 FoodSelectionCard(
@@ -203,11 +209,22 @@ fun StepByStepPlannerScreen(viewModel: SafeFoodViewModel) {
                                     isSelected = isSelected,
                                     onSelect = {
                                         when (currentStep) {
-                                            0 -> selectedGrain = food
-                                            1 -> selectedProtein = food
-                                            2 -> selectedVegetable = food
+                                            0 -> {
+                                                val current = selectedGrains.value.toMutableSet()
+                                                if (current.any { it.id == food.id }) current.removeIf { it.id == food.id } else current.add(food)
+                                                selectedGrains.value = current
+                                            }
+                                            1 -> {
+                                                val current = selectedProteins.value.toMutableSet()
+                                                if (current.any { it.id == food.id }) current.removeIf { it.id == food.id } else current.add(food)
+                                                selectedProteins.value = current
+                                            }
+                                            2 -> {
+                                                val current = selectedVegetables.value.toMutableSet()
+                                                if (current.any { it.id == food.id }) current.removeIf { it.id == food.id } else current.add(food)
+                                                selectedVegetables.value = current
+                                            }
                                         }
-                                        if (currentStep < 2) currentStep++
                                     }
                                 )
                             }
@@ -221,15 +238,45 @@ fun StepByStepPlannerScreen(viewModel: SafeFoodViewModel) {
                         fontSize = 16.sp
                     )
 
-                    Column(
+                    LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        MealSummaryRow(label = "Grain / Starch", item = selectedGrain)
-                        MealSummaryRow(label = "Protein", item = selectedProtein)
-                        MealSummaryRow(label = "Vegetable", item = selectedVegetable)
+                        item {
+                            Text(
+                                text = "Grain / Starch (${selectedGrains.value.size})",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        items(selectedGrains.value.toList()) { item ->
+                            MealSummaryRow(label = "Grain / Starch", item = item)
+                        }
+                        item {
+                            Text(
+                                text = "Protein (${selectedProteins.value.size})",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        items(selectedProteins.value.toList()) { item ->
+                            MealSummaryRow(label = "Protein", item = item)
+                        }
+                        item {
+                            Text(
+                                text = "Vegetable (${selectedVegetables.value.size})",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        items(selectedVegetables.value.toList()) { item ->
+                            MealSummaryRow(label = "Vegetable", item = item)
+                        }
                     }
                 }
             }
@@ -265,7 +312,8 @@ fun StepByStepPlannerScreen(viewModel: SafeFoodViewModel) {
             } else {
                 Button(
                     onClick = {
-                        viewModel.showMessage("Custom Step-by-Step Meal Created!")
+                        val total = selectedGrains.value.size + selectedProteins.value.size + selectedVegetables.value.size
+                        viewModel.showMessage("Custom Step-by-Step Meal Created! ($total items)")
                     },
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.weight(1f)

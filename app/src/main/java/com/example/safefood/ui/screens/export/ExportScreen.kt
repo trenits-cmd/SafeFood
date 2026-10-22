@@ -65,7 +65,35 @@ fun ExportScreen(viewModel: SafeFoodViewModel) {
     }
 
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) viewModel.importFoodsCsv(uri)
+        if (uri != null) when (selectedExportType) {
+            0 -> viewModel.importFoodsCsv(uri)
+            1 -> viewModel.importShoppingListCsv(uri)
+        }
+    }
+
+    /**
+     * Generates and offers a download of a template CSV for the selected type.
+     * The food template includes all columns expected by CsvImporter.
+     * The shopping list template includes ID, name, category, status, and source meal.
+     */
+    fun downloadTemplate(type: Int) {
+        when (type) {
+            0 -> {
+                val template = "ID,Food Name,Category,Category ID,Rating (0-5),Last Rated Timestamp,Last Rated Date,Notes,Nutrients,Season,Image URL,Is Potential Meal,Is Blacklisted,Previous Category ID\n" +
+                    "food_1,Whole Milk,Dairy,cat_dairy,5,2026-01-15 14:30:00,2026-01-15,creamy,Proteins;Healthy Fats,All Year,file:///android_asset/food_images/milk.jpg,true,false,"
+                val stamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                val fileName = "safefood_foods_template_$stamp.csv"
+                viewModel.downloadCsvFile(template, fileName, context)
+            }
+            1 -> {
+                val template = "ID,Item Name,Category,Status,Source Meal\n" +
+                    "shop_1,White Rice,General,NEEDED,Wednesday\n" +
+                    "shop_2,Applesauce,General,IN_CART,Wednesday"
+                val stamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                val fileName = "safefood_shopping_list_template_$stamp.csv"
+                viewModel.downloadCsvFile(template, fileName, context)
+            }
+        }
     }
 
     Column(
@@ -166,6 +194,26 @@ fun ExportScreen(viewModel: SafeFoodViewModel) {
             }
         }
 
+        OutlinedButton(
+                onClick = { downloadTemplate(0) },
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.FileDownload, contentDescription = null, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Food Template", fontSize = 12.sp)
+            }
+            OutlinedButton(
+                onClick = { downloadTemplate(1) },
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.FileDownload, contentDescription = null, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Shopping List Template", fontSize = 12.sp)
+            }
+        }
+
         // Preview Box
         Text("CSV Output Preview:", fontWeight = FontWeight.Bold, fontSize = 15.sp)
 
@@ -226,4 +274,3 @@ fun ExportScreen(viewModel: SafeFoodViewModel) {
             }
         }
     }
-}

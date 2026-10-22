@@ -313,6 +313,31 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun importShoppingListCsv(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val csvContent = withContext(Dispatchers.IO) {
+                    getApplication<Application>().contentResolver.openInputStream(uri)
+                        ?.bufferedReader()
+                        ?.use { it.readText() }
+                        ?: throw IllegalStateException("Could not read the selected file")
+                }
+                val shoppingList = CsvImporter.parseShoppingListCsv(
+                    csvContent = csvContent,
+                    existingShoppingList = shoppingList.value
+                )
+                val importedCount = shoppingList.size
+                if (importedCount > 0) {
+                    showMessage("Imported $importedCount item${if (importedCount == 1) "" else "s"} from CSV")
+                } else {
+                    showMessage("No valid rows found in this CSV")
+                }
+            } catch (e: Exception) {
+                showMessage(e.message ?: "Could not import CSV")
+            }
+        }
+    }
+
     fun getShoppingCsvText(): String {
         return CsvExporter.exportShoppingListToCsv(shoppingList.value)
     }
@@ -339,6 +364,38 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
                 context.startActivity(Intent.createChooser(sendIntent, title))
             } catch (e: Exception) {
                 showMessage(e.message ?: "Could not share CSV")
+            }
+        }
+    }
+
+    /**
+     * Downloads a CSV template file to the app's cache directory and opens the
+     * system file picker so the user can save it or share it immediately.
+     * @param csvText the template CSV text to write
+     * @param fileName suggested file name
+     * @param context Android context, obtained from the composable
+     */
+    fun downloadCsvFile(csvText: String, fileName: String, context: Context) {
+        viewModelScope.launch {
+            try {
+                val uri = withContext(Dispatchers.IO) {
+                    val exportDir = File(context.cacheDir, "exports").apply { mkdirs() }
+                    val file = File(exportDir, fileName)
+                    file.writeText(csvText)
+                    FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        file
+                    )
+                }
+                val openIntent = Intent(Intent.ACTION_VIEW).apply {
+                    type = "text/csv"
+                    data = uri
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(openIntent)
+            } catch (e: Exception) {
+                showMessage(e.message ?: "Could not download template")
             }
         }
     }

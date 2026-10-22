@@ -4,6 +4,8 @@ import com.example.safefood.data.model.FoodCategory
 import com.example.safefood.data.model.FoodItem
 import com.example.safefood.data.model.FoodRatings
 import com.example.safefood.data.model.NutrientType
+import com.example.safefood.data.model.ShoppingItem
+import com.example.safefood.data.model.ShoppingItemStatus
 import java.util.UUID
 
 object CsvImporter {
@@ -144,7 +146,47 @@ object CsvImporter {
         
         return ImportResult(importedFoods, newCategories, errors)
     }
-    
+
+    fun parseShoppingListCsv(
+        csvContent: String,
+        existingShoppingList: List<ShoppingItem>
+    ): List<ShoppingItem> {
+        val lines = csvContent.lines().filter { it.isNotBlank() }
+        if (lines.isEmpty()) return emptyList()
+        
+        val header = lines[0].split(",").map { it.trim().lowercase().replace("\"", "") }
+        val errors = mutableListOf<String>()
+        val importedItems = mutableListOf<ShoppingItem>()
+        
+        val idIdx = header.indexOfFirst { it == "id" }
+        val nameIdx = header.indexOfFirst { it.contains("name") }
+        val categoryIdx = header.indexOfFirst { it.contains("category") && !it.contains("id") }
+        val statusIdx = header.indexOfFirst { it.contains("status") }
+        val sourceMealIdx = header.indexOfFirst { it.contains("source meal") }
+        
+        for (i in 1 until lines.size) {
+            try {
+                val values = parseCsvLine(lines[i])
+                val id = if (idIdx != -1 && idIdx < values.size && values[idIdx].isNotBlank()) values[idIdx] else UUID.randomUUID().toString()
+                val name = if (nameIdx != -1 && nameIdx < values.size) values[nameIdx] else ""
+                if (name.isBlank()) continue
+                val category = if (categoryIdx != -1 && categoryIdx < values.size) values[categoryIdx] else "General"
+                val statusStr = if (statusIdx != -1 && statusIdx < values.size) values[statusIdx] else "NEEDED"
+                val status = when (statusStr.trim().uppercase()) {
+                    "NEEDED" -> ShoppingItemStatus.NEEDED
+                    "IN_CART" -> ShoppingItemStatus.IN_CART
+                    "ALREADY_HAVE" -> ShoppingItemStatus.ALREADY_HAVE
+                    else -> ShoppingItemStatus.NEEDED
+                }
+                val sourceMeal = if (sourceMealIdx != -1 && sourceMealIdx < values.size) values[sourceMealIdx] else null
+                importedItems.add(ShoppingItem(id = id, name = name, category = category, status = status, sourceMeal = sourceMeal))
+            } catch (e: Exception) {
+                errors.add("Row $i: ${e.message}")
+            }
+        }
+        return importedItems
+    }
+
     private fun parseCsvLine(line: String): List<String> {
         val result = mutableListOf<String>()
         val current = StringBuilder()

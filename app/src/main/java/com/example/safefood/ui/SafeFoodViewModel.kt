@@ -16,7 +16,6 @@ import com.example.safefood.data.model.FoodRatings
 import com.example.safefood.data.model.MealPlan
 import com.example.safefood.data.model.MealPlanDay
 import com.example.safefood.data.model.NutrientType
-import com.example.safefood.data.model.PicardMeal
 import com.example.safefood.data.model.ShoppingItem
 import com.example.safefood.data.model.ShoppingItemStatus
 import com.example.safefood.data.repository.SafeFoodRepository
@@ -39,9 +38,6 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
     val foods: StateFlow<List<FoodItem>> = repository.foods
     val shoppingList: StateFlow<List<ShoppingItem>> = repository.shoppingList
     val mealPlans: StateFlow<List<MealPlan>> = repository.mealPlans
-
-    private val _picardMeals = MutableStateFlow<List<PicardMeal>>(emptyList())
-    val picardMeals: StateFlow<List<PicardMeal>> = _picardMeals.asStateFlow()
 
     private val _selectedSeasonFilter = MutableStateFlow("All Seasons")
     val selectedSeasonFilter: StateFlow<String> = _selectedSeasonFilter.asStateFlow()
@@ -338,53 +334,6 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
                 }
             } catch (e: Exception) {
                 showMessage(e.message ?: "Could not import CSV")
-            }
-        }
-    }
-
-    fun updatePicardRange() {
-        viewModelScope.launch {
-            val sampleMeals = listOf(
-                PicardMeal(
-                    name = "Poulet Rôti et Pommes de Terre",
-                    price = "€6.99",
-                    cookingInstructions = "20 min au four à 200°C",
-                    ingredients = listOf("Poulet", "Pommes de terre", "Carottes", "Haricots verts", "Sauce"),
-                    imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400",
-                    category = "Plats cuisinés",
-                    description = "Poulet rôti avec pommes de terre et légumes",
-                    servings = "2"
-                ),
-                PicardMeal(
-                    name = "Lasagnes Bolognese",
-                    price = "€5.49",
-                    cookingInstructions = "30 min au four à 190°C",
-                    ingredients = listOf("Pâtes", "Viande hachée", "Tomates", "Bechamel", "Fromage"),
-                    imageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400",
-                    category = "Pâtes",
-                    description = "Lasagnes traditionnelles à la bolognaise",
-                    servings = "2"
-                ),
-                PicardMeal(
-                    name = "Poêlée de Légumes",
-                    price = "€4.49",
-                    cookingInstructions = "10 min à la poêle",
-                    ingredients = listOf("Brocolis", "Carottes", "Poivrons", "Champignons", "Ail"),
-                    imageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400",
-                    category = "Légumes",
-                    description = "Poêlée de légumes frais surgelés",
-                    servings = "1"
-                )
-            )
-            _picardMeals.value = sampleMeals
-            showMessage("Picard range updated - ${sampleMeals.size} meals loaded")
-        }
-    }
-
-    fun addPicardMealToShopping(meal: PicardMeal) {
-        meal.ingredients.forEach { ingredient ->
-            runRepo("Added $ingredient to shopping list") {
-                repository.addShoppingItem(ingredient, category = "Picard", sourceMeal = meal.name)
             }
         }
     }

@@ -98,17 +98,3 @@ data class MealPlan(
     val timestamp: Long = System.currentTimeMillis(),
     val days: List<MealPlanDay>
 )
-
-@Serializable
-data class PicardMeal(
-    val id: String = UUID.randomUUID().toString(),
-    val name: String,
-    val price: String = "",
-    val cookingInstructions: String = "",
-    val ingredients: List<String> = emptyList(),
-    val imageUrl: String = "",
-    val category: String = "",
-    val description: String = "",
-    val servings: String = "",
-    val storageInfo: String = ""
-)

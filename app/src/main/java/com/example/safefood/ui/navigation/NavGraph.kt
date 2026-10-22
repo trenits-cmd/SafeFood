@@ -47,7 +47,6 @@ import com.example.safefood.ui.SafeFoodViewModel
 import com.example.safefood.ui.screens.categories.CategoriesScreen
 import com.example.safefood.ui.screens.export.ExportScreen
 import com.example.safefood.ui.screens.menuplanner.StepByStepPlannerScreen
-import com.example.safefood.ui.screens.picard.PicardScreen
 import com.example.safefood.ui.screens.safefood.SafeFoodScreen
 import com.example.safefood.ui.screens.shopping.ShoppingListScreen
 
@@ -57,7 +56,6 @@ sealed class Screen(val route: String, val title: String, val icon: androidx.com
     object Shopping : Screen("shopping", "Shopping", Icons.Default.ShoppingCart)
     object Export : Screen("export", "Export CSV", Icons.Default.FileDownload)
     object StepByStepPlanner : Screen("step_by_step_planner", "Step-by-Step Planer", Icons.Default.AutoAwesome)
-    object Picard : Screen("picard", "Picard", Icons.Default.Restaurant)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,8 +79,7 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
         Screen.Categories,
         Screen.SafeFood,
         Screen.Shopping,
-        Screen.StepByStepPlanner,
-        Screen.Picard
+        Screen.StepByStepPlanner
     )
 
     Scaffold(
@@ -230,9 +227,6 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
             }
             composable(Screen.StepByStepPlanner.route) {
                 StepByStepPlannerScreen(viewModel = viewModel)
-            }
-            composable(Screen.Picard.route) {
-                PicardScreen(viewModel = viewModel)
             }
         }
     }

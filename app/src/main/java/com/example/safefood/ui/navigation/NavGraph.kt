@@ -46,7 +46,7 @@ import com.example.safefood.ui.SafeFoodViewModel
 import com.example.safefood.ui.screens.categories.CategoriesScreen
 import com.example.safefood.ui.screens.export.ExportScreen
 import com.example.safefood.ui.screens.menuplanner.MenuPlannerScreen
-import com.example.safefood.ui.screens.menuplanner.StepByStepPlannerScreen
+
 import com.example.safefood.ui.screens.safefood.SafeFoodScreen
 import com.example.safefood.ui.screens.shopping.ShoppingListScreen
 
@@ -229,9 +229,6 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
             }
             composable(Screen.Export.route) {
                 ExportScreen(viewModel = viewModel)
-            }
-            composable(Screen.StepByStepPlanner.route) {
-                StepByStepPlannerScreen(viewModel = viewModel)
             }
         }
     }

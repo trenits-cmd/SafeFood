@@ -119,7 +119,7 @@ class SafeFoodViewModel(application: Application) : AndroidViewModel(application
         _snackbarMessage.value = null
     }
 
-    private fun showMessage(msg: String) {
+    fun showMessage(msg: String) {
         _snackbarMessage.value = msg
     }
 

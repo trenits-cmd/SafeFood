@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.AlertDialog
@@ -45,18 +46,18 @@ import androidx.navigation.compose.rememberNavController
 import com.example.safefood.ui.SafeFoodViewModel
 import com.example.safefood.ui.screens.categories.CategoriesScreen
 import com.example.safefood.ui.screens.export.ExportScreen
-import com.example.safefood.ui.screens.menuplanner.MenuPlannerScreen
 import com.example.safefood.ui.screens.menuplanner.StepByStepPlannerScreen
+import com.example.safefood.ui.screens.picard.PicardScreen
 import com.example.safefood.ui.screens.safefood.SafeFoodScreen
 import com.example.safefood.ui.screens.shopping.ShoppingListScreen
 
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     object Categories : Screen("categories", "Categories", Icons.Default.Category)
     object SafeFood : Screen("safe_food", "SafeFood", Icons.Default.Verified)
-    object AiMenu : Screen("ai_menu", "Menu", Icons.Default.AutoAwesome)
     object Shopping : Screen("shopping", "Shopping", Icons.Default.ShoppingCart)
     object Export : Screen("export", "Export CSV", Icons.Default.FileDownload)
     object StepByStepPlanner : Screen("step_by_step_planner", "Step-by-Step Planer", Icons.Default.AutoAwesome)
+    object Picard : Screen("picard", "Picard", Icons.Default.Restaurant)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,9 +80,9 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
     val bottomNavItems = listOf(
         Screen.Categories,
         Screen.SafeFood,
-        Screen.AiMenu,
         Screen.Shopping,
-        Screen.StepByStepPlanner
+        Screen.StepByStepPlanner,
+        Screen.Picard
     )
 
     Scaffold(
@@ -221,9 +222,6 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
             composable(Screen.SafeFood.route) {
                 SafeFoodScreen(viewModel = viewModel)
             }
-            composable(Screen.AiMenu.route) {
-                MenuPlannerScreen(viewModel = viewModel)
-            }
             composable(Screen.Shopping.route) {
                 ShoppingListScreen(viewModel = viewModel)
             }
@@ -232,6 +230,9 @@ fun MainScreen(viewModel: SafeFoodViewModel) {
             }
             composable(Screen.StepByStepPlanner.route) {
                 StepByStepPlannerScreen(viewModel = viewModel)
+            }
+            composable(Screen.Picard.route) {
+                PicardScreen(viewModel = viewModel)
             }
         }
     }
